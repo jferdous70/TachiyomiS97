@@ -2,6 +2,8 @@ package eu.kanade.tachiyomi.data.download
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Environment
 import android.provider.Settings
@@ -40,6 +42,8 @@ import timber.log.Timber
 import uy.kohesive.injekt.injectLazy
 import java.io.BufferedOutputStream
 import java.io.File
+import java.io.FileOutputStream
+import java.io.OutputStream
 import java.util.zip.CRC32
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -66,6 +70,9 @@ class Downloader(
 ) {
     private val preferences: PreferencesHelper by injectLazy()
     private val chapterCache: ChapterCache by injectLazy()
+    private fun clearWebviewData() {
+        context.applicationInfo?.dataDir?.let { File("$it/app_webview/").deleteRecursively() }
+    }
 
     /**
      * Store for persisting downloads across restarts.
@@ -223,9 +230,12 @@ class Downloader(
             .groupBy { it.source }
             .flatMap(
                 { bySource ->
-                    bySource.concatMap { download ->
-                        downloadChapter(download).subscribeOn(Schedulers.io())
-                    }
+                    bySource.flatMap(
+                        { download ->
+                            downloadChapter(download).subscribeOn(Schedulers.io())
+                        },
+                        4
+                    )
                 },
                 5
             )
@@ -236,6 +246,7 @@ class Downloader(
                     completeDownload(it)
                 },
                 { error ->
+                    clearWebviewData()
                     DownloadService.stop(context)
                     Timber.e(error)
                     notifier.onError(error.message)
@@ -298,8 +309,10 @@ class Downloader(
                     notifier.massDownloadWarning()
                 }
                 DownloadService.start(context)
-            } else if (!isRunning && !LibraryUpdateService.isRunning()) {
-                notifier.onDownloadPaused()
+//            } else if (!isRunning && !LibraryUpdateService.isRunning()) {
+//                notifier.onDownloadPaused()
+            } else if (!isRunning) {
+                DownloadService.start(context)
             }
         }
     }
@@ -365,7 +378,12 @@ class Downloader(
             // Concurrently do 5 pages at a time
             .flatMap({ page -> getOrDownloadImage(page, download, tmpDir) }, 5)
             // Do when page is downloaded.
-            .doOnNext { notifier.onProgressChange(download) }
+            .doOnNext { page ->
+                if (preferences.splitLongImages().get()) {
+                    splitLongImage(page, tmpDir)
+                }
+                notifier.onProgressChange(download)
+            }
             .toList()
             .map { download }
             // Do after download completes
@@ -522,7 +540,7 @@ class Downloader(
         dirname: String
     ) {
         // Ensure that the chapter folder has all the images.
-        val downloadedImages = tmpDir.listFiles().orEmpty().filterNot { it.name!!.endsWith(".tmp") }
+        val downloadedImages = tmpDir.listFiles().orEmpty().filterNot { it.name!!.endsWith(".tmp") || (it.name!!.contains("_") && !it.name!!.contains("_001")) }
 
         download.status = if (downloadedImages.size == download.pages!!.size) {
             Download.State.DOWNLOADED
@@ -559,6 +577,64 @@ class Downloader(
             }
             cache.addChapter(dirname, download.manga)
             DiskUtil.createNoMediaFile(tmpDir, context)
+        }
+    }
+
+    /**
+     * Splits Long images to improve performance of reader
+     */
+    private fun splitLongImage(page: Page, tmpDir: UniFile) {
+        val filename = String.format("%03d", page.number)
+        val imageFile = tmpDir.listFiles()!!.find { it.name!!.startsWith("$filename.") }
+
+        // Implementation of Auto Split long images upon download.
+        // Checking the image dimensions without loading it in the memory.
+        val options = BitmapFactory.Options()
+        options.inJustDecodeBounds = true
+        BitmapFactory.decodeFile(imageFile!!.filePath, options)
+        val width = options.outWidth
+        val height = options.outHeight
+        val ratio = height / width
+
+        // Check ratio and if this is a tall image then split
+        if (ratio > 3) {
+            // I noticed 1000px runs smoother than screen height below, will keep it  until someone can discover a more optimal number
+            val splitsCount: Int = height / context.resources.displayMetrics.heightPixels + 1
+            val splitHeight = height / splitsCount
+
+            // Getting the scaled bitmap of the source image
+            val bitmap = BitmapFactory.decodeFile(imageFile.filePath)
+            val scaledBitmap: Bitmap =
+                Bitmap.createScaledBitmap(bitmap, bitmap.width, bitmap.height, true)
+
+            // xCord and yCord are the pixel positions of the image splits
+            var yCord = 0
+            val xCord = 0
+            try {
+                for (i in 0 until splitsCount) {
+                    val splitPath = imageFile.filePath!!.substringBefore(".") + "_${"%03d".format(i + 1)}.jpg"
+                    // Compress the bitmap and save in jpg format
+                    val stream: OutputStream = FileOutputStream(splitPath)
+                    Bitmap.createBitmap(
+                        scaledBitmap,
+                        xCord,
+                        yCord,
+                        width,
+                        splitHeight,
+                    ).compress(Bitmap.CompressFormat.JPEG, 100, stream)
+                    stream.flush()
+                    stream.close()
+                    yCord += splitHeight
+                }
+                imageFile.delete()
+            } catch (e: Exception) {
+                // Image splits were not successfully saved so delete them and keep the original image
+                for (i in 0 until splitsCount) {
+                    val splitPath = imageFile.filePath!!.substringBefore(".") + "_${"%03d".format(i + 1)}.jpg"
+                    File(splitPath).delete()
+                }
+                throw e
+            }
         }
     }
 
