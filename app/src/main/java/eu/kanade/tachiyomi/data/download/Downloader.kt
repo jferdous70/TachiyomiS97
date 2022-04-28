@@ -300,13 +300,13 @@ class Downloader(
 
             // Start downloader if needed
             if (autoStart && wasEmpty) {
-                val largestSourceSize = queue
-                    .groupBy { it.source }
-                    .filterKeys { it !is UnmeteredSource }
-                    .maxOfOrNull { it.value.size } ?: 0
-                if (largestSourceSize > CHAPTERS_PER_SOURCE_QUEUE_WARNING_THRESHOLD) {
-                    notifier.massDownloadWarning()
-                }
+//                val largestSourceSize = queue
+//                    .groupBy { it.source }
+//                    .filterKeys { it !is UnmeteredSource }
+//                    .maxOfOrNull { it.value.size } ?: 0
+//                if (largestSourceSize > CHAPTERS_PER_SOURCE_QUEUE_WARNING_THRESHOLD) {
+//                    notifier.massDownloadWarning()
+//                }
                 DownloadService.start(context)
 //            } else if (!isRunning && !LibraryUpdateService.isRunning()) {
 //                notifier.onDownloadPaused()
