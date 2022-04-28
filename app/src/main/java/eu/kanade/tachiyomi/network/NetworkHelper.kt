@@ -33,14 +33,14 @@ class NetworkHelper(val context: Context) {
                 .addInterceptor(UserAgentInterceptor())
                 .apply {
                     if (BuildConfig.DEBUG) {
-                        addInterceptor(
+                        /*addInterceptor(
                             ChuckerInterceptor.Builder(context)
                                 .collector(ChuckerCollector(context))
                                 .maxContentLength(250000L)
                                 .redactHeaders(emptySet())
                                 .alwaysReadResponseBody(false)
                                 .build(),
-                        )
+                        )*/
                     }
 
                     when (preferences.dohProvider()) {
