@@ -598,8 +598,8 @@ class Downloader(
         // Check ratio and if this is a tall image then split
         if (ratio > 3) {
             // I noticed 1000px runs smoother than screen height below, will keep it  until someone can discover a more optimal number
-            val splitHeight = context.resources.displayMetrics.heightPixels
-            val splitsCount = height / splitHeight
+            val splitsCount: Int = height / context.resources.displayMetrics.heightPixels + 1
+            val splitHeight = height / splitsCount
 
             // Getting the scaled bitmap of the source image
             val bitmap = BitmapFactory.decodeFile(imageFile.filePath)
