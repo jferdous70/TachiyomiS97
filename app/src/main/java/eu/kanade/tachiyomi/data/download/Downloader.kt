@@ -389,6 +389,7 @@ class Downloader(
             .doOnNext { ensureSuccessfulDownload(download, mangaDir, tmpDir, chapterDirname) }
             // If the page list threw, it will resume here
             .onErrorReturn { error ->
+                clearWebviewData()
                 download.status = Download.State.ERROR
                 notifier.onError(error.message, download.chapter.name)
                 download
@@ -539,7 +540,7 @@ class Downloader(
         dirname: String,
     ) {
         // Ensure that the chapter folder has all the images.
-        val downloadedImages = tmpDir.listFiles().orEmpty().filterNot { it.name!!.endsWith(".tmp") || (it.name!!.contains("_") && !it.name!!.contains("_001")) }
+        val downloadedImages = tmpDir.listFiles().orEmpty().filterNot { it.name!!.endsWith(".tmp") || (it.name!!.contains("__") && !it.name!!.contains("__001.jpg")) }
 
         download.status = if (downloadedImages.size == download.pages!!.size) {
             Download.State.DOWNLOADED
@@ -584,13 +585,12 @@ class Downloader(
      */
     private fun splitLongImage(page: Page, tmpDir: UniFile) {
         val filename = String.format("%03d", page.number)
-        val imageFile = tmpDir.listFiles()!!.find { it.name!!.startsWith("$filename.") }
-
+        val imageFile = tmpDir.listFiles()!!.find { it.name!!.startsWith("$filename.") } ?: return
         // Implementation of Auto Split long images upon download.
         // Checking the image dimensions without loading it in the memory.
         val options = BitmapFactory.Options()
         options.inJustDecodeBounds = true
-        BitmapFactory.decodeFile(imageFile!!.filePath, options)
+        BitmapFactory.decodeFile(imageFile.filePath, options)
         val width = options.outWidth
         val height = options.outHeight
         val ratio = height / width
@@ -598,8 +598,8 @@ class Downloader(
         // Check ratio and if this is a tall image then split
         if (ratio > 3) {
             // I noticed 1000px runs smoother than screen height below, will keep it  until someone can discover a more optimal number
-            val splitsCount: Int = height / context.resources.displayMetrics.heightPixels + 1
-            val splitHeight = height / splitsCount
+            val splitHeight = context.resources.displayMetrics.heightPixels
+            val splitsCount = height / splitHeight
 
             // Getting the scaled bitmap of the source image
             val bitmap = BitmapFactory.decodeFile(imageFile.filePath)
@@ -611,7 +611,7 @@ class Downloader(
             val xCord = 0
             try {
                 for (i in 0 until splitsCount) {
-                    val splitPath = imageFile.filePath!!.substringBefore(".") + "_${"%03d".format(i + 1)}.jpg"
+                    val splitPath = imageFile.filePath!!.substringBeforeLast(".") + "__${"%03d".format(i + 1)}.jpg"
                     // Compress the bitmap and save in jpg format
                     val stream: OutputStream = FileOutputStream(splitPath)
                     Bitmap.createBitmap(
@@ -629,7 +629,7 @@ class Downloader(
             } catch (e: Exception) {
                 // Image splits were not successfully saved so delete them and keep the original image
                 for (i in 0 until splitsCount) {
-                    val splitPath = imageFile.filePath!!.substringBefore(".") + "_${"%03d".format(i + 1)}.jpg"
+                    val splitPath = imageFile.filePath!!.substringBeforeLast(".") + "__${"%03d".format(i + 1)}.jpg"
                     File(splitPath).delete()
                 }
                 throw e
