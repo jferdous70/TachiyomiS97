@@ -378,10 +378,10 @@ class Downloader(
             .flatMap({ page -> getOrDownloadImage(page, download, tmpDir) }, 5)
             // Do when page is downloaded.
             .doOnNext { page ->
+                notifier.onProgressChange(download)
                 if (preferences.splitLongImages().get()) {
                     splitLongImage(page, tmpDir)
                 }
-                notifier.onProgressChange(download)
             }
             .toList()
             .map { download }
