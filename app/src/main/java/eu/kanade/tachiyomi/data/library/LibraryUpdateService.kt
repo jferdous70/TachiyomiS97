@@ -332,7 +332,7 @@ class LibraryUpdateService(
 
         mangaToUpdate.addAll(mangaToAdd)
         mangaToUpdateMap.putAll(mangaToAdd.groupBy { it.source })
-        checkIfMassiveUpdate()
+       // checkIfMassiveUpdate()
         coroutineScope {
             jobCount.andIncrement
             val list = mangaToUpdateMap.keys.map { source ->
