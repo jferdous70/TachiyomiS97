@@ -388,10 +388,10 @@ class Downloader(
             .doOnNext { ensureSuccessfulDownload(download, mangaDir, tmpDir, chapterDirname) }
             // If the page list threw, it will resume here
             .onErrorReturn { error ->
-                clearWebviewData()
                 download.status = Download.State.ERROR
                 if (error.message!!.contains("Failed to bypass Cloudflare")) {
                     synchronized(this) {
+                        clearWebviewData()
                         val q = queue
                             .filter { it.status != Download.State.ERROR }
                         if (q.isEmpty()) {
