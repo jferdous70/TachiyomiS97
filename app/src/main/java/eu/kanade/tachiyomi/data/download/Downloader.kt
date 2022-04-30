@@ -244,7 +244,6 @@ class Downloader(
                     completeDownload(it)
                 },
                 { error ->
-                    clearWebviewData()
                     DownloadService.stop(context)
                     Timber.e(error)
                     notifier.onError(error.message)
