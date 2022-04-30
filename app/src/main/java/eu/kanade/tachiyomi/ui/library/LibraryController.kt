@@ -172,7 +172,9 @@ class LibraryController(
      */
     private val selectedMangas = mutableSetOf<Manga>()
 
-    private lateinit var adapter: LibraryCategoryAdapter
+    private var mAdapter: LibraryCategoryAdapter? = null
+    private val adapter: LibraryCategoryAdapter
+        get() = mAdapter!!
 
     private var lastClickPosition = -1
 
@@ -531,7 +533,7 @@ class LibraryController(
     @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View) {
         super.onViewCreated(view)
-        adapter = LibraryCategoryAdapter(this)
+        mAdapter = LibraryCategoryAdapter(this)
         adapter.stateRestorationPolicy = RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
         setRecyclerLayout()
         binding.libraryGridRecycler.recycler.setHasFixedSize(true)
@@ -1024,6 +1026,7 @@ class LibraryController(
         }
         displaySheet?.dismiss()
         displaySheet = null
+        mAdapter = null
         saveStaggeredState()
         super.onDestroyView(view)
     }
@@ -1460,6 +1463,7 @@ class LibraryController(
 
     @SuppressLint("NotifyDataSetChanged")
     override fun onUpdateManga(manga: Manga?) {
+        if (manga?.source == LibraryUpdateService.STARTING_UPDATE_SOURCE) return
         if (manga == null) adapter.notifyDataSetChanged()
         else presenter.updateManga()
     }
@@ -1569,8 +1573,8 @@ class LibraryController(
         }
     }
 
-    override fun updateCategory(catId: Int): Boolean {
-        val category = (adapter.getItem(catId) as? LibraryHeaderItem)?.category ?: return false
+    override fun updateCategory(position: Int): Boolean {
+        val category = (adapter.getItem(position) as? LibraryHeaderItem)?.category ?: return false
         val inQueue = LibraryUpdateService.categoryInQueue(category.id)
         snack?.dismiss()
         snack = view?.snack(
