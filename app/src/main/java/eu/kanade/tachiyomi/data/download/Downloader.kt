@@ -435,7 +435,7 @@ class Downloader(
         tmpFile?.delete()
 
         // Try to find the image file.
-        val imageFile = tmpDir.listFiles()!!.find { it.name!!.startsWith("$filename.") }
+        val imageFile = tmpDir.listFiles()!!.find { it.name!!.startsWith("$filename.") || it.name!!.contains("${filename}__001") }
 
         // If the image is already downloaded, do nothing. Otherwise download from network
         val pageObservable = when {
