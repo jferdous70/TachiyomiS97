@@ -8,7 +8,6 @@ import androidx.core.view.doOnNextLayout
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.ui.library.LibraryItem
@@ -29,7 +28,7 @@ class AutofitRecyclerView @JvmOverloads constructor(context: Context, attrs: Att
     var columnWidth = -1f
         set(value) {
             field = value
-            if (measuredWidth > 0) {
+            if (width > 0) {
                 setSpan(true)
             }
         }
@@ -63,7 +62,7 @@ class AutofitRecyclerView @JvmOverloads constructor(context: Context, attrs: Att
 
     private fun getTempSpan(): Int {
         if (spanCount == 0 && columnWidth > 0) {
-            val dpWidth = (measuredWidth.pxToDp / 100f).roundToInt()
+            val dpWidth = (measuredWidth.toFloat().pxToDp / 100f).roundToInt()
             return max(1, (dpWidth / columnWidth).roundToInt())
         }
         return 3
