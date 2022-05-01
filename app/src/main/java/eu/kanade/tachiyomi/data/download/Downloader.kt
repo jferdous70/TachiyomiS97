@@ -389,8 +389,8 @@ class Downloader(
             .onErrorReturn { error ->
                 download.status = Download.State.ERROR
                 if (error.message!!.contains("Failed to bypass Cloudflare")) {
-                    synchronized(this) {
-                        clearWebviewData()
+                    clearWebviewData()
+                    if (false) {
                         val q = queue
                             .filter { it.status != Download.State.ERROR }
                         if (q.isEmpty()) {
