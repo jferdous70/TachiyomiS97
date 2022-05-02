@@ -1100,4 +1100,5 @@
     <string name="view_chapters">View chapters</string>
     <string name="warning">Warning</string>
     <string name="wifi">Wi-Fi</string>
+    <string name="every_1_hour">Every 1 hour</string>
 </resources>

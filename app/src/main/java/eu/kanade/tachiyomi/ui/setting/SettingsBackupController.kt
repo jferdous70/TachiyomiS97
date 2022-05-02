@@ -101,13 +101,14 @@ class SettingsBackupController : SettingsController() {
                 titleRes = R.string.backup_frequency
                 entriesRes = arrayOf(
                     R.string.manual,
+                    R.string.every_1_hour,
                     R.string.every_6_hours,
                     R.string.every_12_hours,
                     R.string.daily,
                     R.string.every_2_days,
                     R.string.weekly,
                 )
-                entryValues = listOf(0, 6, 12, 24, 48, 168)
+                entryValues = listOf(0, 1, 6, 12, 24, 48, 168)
 
                 onChange { newValue ->
                     val interval = newValue as Int
@@ -140,8 +141,8 @@ class SettingsBackupController : SettingsController() {
             intListPreference(activity) {
                 bindTo(preferences.numberOfBackups())
                 titleRes = R.string.max_auto_backups
-                entries = (1..5).map(Int::toString)
-                entryRange = 1..5
+                entries = (1..12).map(Int::toString)
+                entryRange = 1..12
 
                 visibleIf(preferences.backupInterval()) { it > 0 }
             }
