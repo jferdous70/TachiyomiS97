@@ -80,10 +80,11 @@ android {
 
     buildTypes {
         getByName("debug") {
-            applicationIdSuffix = ".debugJ2K"
+            applicationIdSuffix = ".s97.debug"
         }
         getByName("release") {
-            applicationIdSuffix = ".j2k"
+            applicationIdSuffix = ".s97"
+            signingConfig = signingConfigs.getByName("debug")
             isShrinkResources = true
             isMinifyEnabled = true
             proguardFiles("proguard-android-optimize.txt", "proguard-rules.pro")
