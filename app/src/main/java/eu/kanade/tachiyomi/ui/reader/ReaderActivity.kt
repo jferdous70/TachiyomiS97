@@ -26,7 +26,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import android.view.WindowManager
-import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import androidx.core.app.ActivityOptionsCompat
 import androidx.core.content.ContextCompat
@@ -110,7 +109,8 @@ import eu.kanade.tachiyomi.util.view.isCollapsed
 import eu.kanade.tachiyomi.util.view.isExpanded
 import eu.kanade.tachiyomi.util.view.popupMenu
 import eu.kanade.tachiyomi.util.view.snack
-import eu.kanade.tachiyomi.widget.SimpleAnimationListener
+import eu.kanade.tachiyomi.widget.doOnEnd
+import eu.kanade.tachiyomi.widget.doOnStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -223,7 +223,7 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
             val intent = newIntent(activity, manga, chapter)
             intent.putExtra(TRANSITION_NAME, sharedElement.transitionName)
             val activityOptions = ActivityOptionsCompat.makeSceneTransitionAnimation(
-                activity, sharedElement, sharedElement.transitionName
+                activity, sharedElement, sharedElement.transitionName,
             )
             return intent to activityOptions.toBundle()
         }
@@ -263,7 +263,7 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
         binding.appBar.setBackgroundColor(contextCompatColor(R.color.surface_alpha))
         ViewCompat.setBackgroundTintList(
             binding.readerNav.root,
-            ColorStateList.valueOf(contextCompatColor(R.color.surface_alpha))
+            ColorStateList.valueOf(contextCompatColor(R.color.surface_alpha)),
         )
 
         if (presenter.needsInit()) {
@@ -348,7 +348,7 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
         (viewer as? PagerViewer)?.config?.let { config ->
             val icon = ContextCompat.getDrawable(
                 this,
-                if ((!config.shiftDoublePage).xor(viewer is R2LPagerViewer)) R.drawable.ic_page_previous_outline_24dp else R.drawable.ic_page_next_outline_24dp
+                if ((!config.shiftDoublePage).xor(viewer is R2LPagerViewer)) R.drawable.ic_page_previous_outline_24dp else R.drawable.ic_page_next_outline_24dp,
             )
             splitItem?.icon = icon
             binding.chaptersSheet.shiftPageButton.setImageDrawable(icon)
@@ -381,8 +381,8 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
                     isDoublePage -> R.drawable.ic_book_open_variant_24dp
                     (viewer as? PagerViewer)?.config?.splitPages == true -> R.drawable.ic_book_open_split_24dp
                     else -> R.drawable.ic_single_page_24dp
-                }
-            )
+                },
+            ),
         )
         with(binding.readerNav) {
             listOf(leftPageText, rightPageText).forEach {
@@ -422,7 +422,7 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
             compatToolTipText =
                 getString(
                     if (enabled) R.string.remove_crop
-                    else R.string.crop_borders
+                    else R.string.crop_borders,
                 )
         }
     }
@@ -567,7 +567,7 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
             duration = (
                 resources?.getInteger(
                     if (entering) android.R.integer.config_longAnimTime
-                    else android.R.integer.config_mediumAnimTime
+                    else android.R.integer.config_mediumAnimTime,
                 ) ?: 500
                 ).toLong()
             addTarget(android.R.id.content)
@@ -583,7 +583,7 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
         setSupportActionBar(binding.toolbar)
         val primaryColor = ColorUtils.setAlphaComponent(
             getResourceColor(R.attr.colorSurface),
-            200
+            200,
         )
         binding.appBar.setBackgroundColor(primaryColor)
         window.statusBarColor = Color.TRANSPARENT
@@ -695,7 +695,7 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
                         R.string.theres_no_next_chapter
                     } else {
                         R.string.theres_no_previous_chapter
-                    }
+                    },
                 )
             }
         }
@@ -718,7 +718,7 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
                         R.string.theres_no_next_chapter
                     } else {
                         R.string.theres_no_previous_chapter
-                    }
+                    },
                 )
             }
         }
@@ -742,7 +742,8 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
 
                 override fun onStopTrackingTouch(slider: Slider) {
                 }
-            })
+            },
+            )
             listOf(root, leftChapter, rightChapter, pageSeekbar).forEach {
                 it.setOnTouchListener { _, event ->
                     val result = gestureDetector.onTouchEvent(event)
@@ -849,7 +850,7 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
                 max(
                     0,
                     (rootInsets.getBottomGestureInsets()) -
-                        rootInsets.getInsetsIgnoringVisibility(systemBars()).bottom
+                        rootInsets.getInsetsIgnoringVisibility(systemBars()).bottom,
                 )
             }
             binding.chaptersSheet.chapterRecycler.updatePaddingRelative(bottom = systemInsets.bottom)
@@ -880,7 +881,7 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
                     isInNightMode() -> {
                         ColorUtils.setAlphaComponent(
                             getResourceColor(R.attr.colorPrimaryVariant),
-                            179
+                            179,
                         )
                     }
                     else -> Color.argb(179, 0, 0, 0)
@@ -960,13 +961,9 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
             if (animate && oldVisibility != menuVisible) {
                 if (!menuStickyVisible) {
                     val toolbarAnimation = AnimationUtils.loadAnimation(this, R.anim.enter_from_top)
-                    toolbarAnimation.setAnimationListener(
-                        object : SimpleAnimationListener() {
-                            override fun onAnimationStart(animation: Animation) {
-                                window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
-                            }
-                        }
-                    )
+                    toolbarAnimation.doOnStart {
+                        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+                    }
                     binding.appBar.startAnimation(toolbarAnimation)
                 }
                 binding.chaptersSheet.chaptersBottomSheet.sheetBehavior?.collapse()
@@ -979,13 +976,7 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
 
             if (animate && binding.readerMenu.isVisible) {
                 val toolbarAnimation = AnimationUtils.loadAnimation(this, R.anim.exit_to_top)
-                toolbarAnimation.setAnimationListener(
-                    object : SimpleAnimationListener() {
-                        override fun onAnimationEnd(animation: Animation) {
-                            binding.readerMenu.isVisible = false
-                        }
-                    }
-                )
+                toolbarAnimation.doOnEnd { binding.readerMenu.isVisible = false }
                 binding.appBar.startAnimation(toolbarAnimation)
                 BottomSheetBehavior.from(binding.chaptersSheet.chaptersBottomSheet).isHideable = true
                 binding.chaptersSheet.chaptersBottomSheet.sheetBehavior?.hide()
@@ -1024,10 +1015,10 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
                             ReadingModeType.VERTICAL.flagValue -> R.string.vertical_viewer
                             ReadingModeType.WEBTOON.flagValue -> R.string.webtoon_style
                             else -> R.string.left_to_right_viewer
-                        }
-                    ).lowercase(Locale.getDefault())
+                        },
+                    ).lowercase(Locale.getDefault()),
                 ),
-                4000
+                4000,
             ) {
                 setAction(R.string.use_default) {
                     presenter.setMangaReadingMode(0)
@@ -1075,7 +1066,7 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
                 Color.BLACK
             } else {
                 getResourceColor(R.attr.background)
-            }
+            },
         )
 
         binding.toolbar.title = manga.title
@@ -1273,61 +1264,61 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
                 MaterialMenuSheet.MenuSheetItem(
                     3,
                     R.drawable.ic_outline_share_24dp,
-                    R.string.share_second_page
+                    R.string.share_second_page,
                 ),
                 MaterialMenuSheet.MenuSheetItem(
                     4,
                     R.drawable.ic_outline_save_24dp,
-                    R.string.save_second_page
+                    R.string.save_second_page,
                 ),
                 MaterialMenuSheet.MenuSheetItem(
                     5,
                     R.drawable.ic_outline_photo_24dp,
-                    R.string.set_second_page_as_cover
+                    R.string.set_second_page_as_cover,
                 ),
                 MaterialMenuSheet.MenuSheetItem(
                     0,
                     R.drawable.ic_share_24dp,
-                    R.string.share_first_page
+                    R.string.share_first_page,
                 ),
                 MaterialMenuSheet.MenuSheetItem(
                     1,
                     R.drawable.ic_save_24dp,
-                    R.string.save_first_page
+                    R.string.save_first_page,
                 ),
                 MaterialMenuSheet.MenuSheetItem(
                     2,
                     R.drawable.ic_photo_24dp,
-                    R.string.set_first_page_as_cover
+                    R.string.set_first_page_as_cover,
                 ),
                 MaterialMenuSheet.MenuSheetItem(
                     6,
                     R.drawable.ic_share_all_outline_24dp,
-                    R.string.share_combined_pages
+                    R.string.share_combined_pages,
                 ),
                 MaterialMenuSheet.MenuSheetItem(
                     7,
                     R.drawable.ic_save_all_outline_24dp,
-                    R.string.save_combined_pages
-                )
+                    R.string.save_combined_pages,
+                ),
             )
         } else {
             listOf(
                 MaterialMenuSheet.MenuSheetItem(
                     0,
                     R.drawable.ic_share_24dp,
-                    R.string.share
+                    R.string.share,
                 ),
                 MaterialMenuSheet.MenuSheetItem(
                     1,
                     R.drawable.ic_save_24dp,
-                    R.string.save
+                    R.string.save,
                 ),
                 MaterialMenuSheet.MenuSheetItem(
                     2,
                     R.drawable.ic_photo_24dp,
-                    R.string.set_as_cover
-                )
+                    R.string.set_as_cover,
+                ),
             )
         }
         MaterialMenuSheet(this, items) { _, item ->
@@ -1425,7 +1416,7 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
         }
         val text = "${manga.title}: ${getString(
             R.string.chapter_,
-            decimalFormat.format(chapter.chapter_number)
+            decimalFormat.format(chapter.chapter_number),
         )}, $pageNumber"
 
         val stream = file.getUriCompat(this)
@@ -1486,7 +1477,7 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
                 Success -> R.string.cover_updated
                 AddToLibraryFirst -> R.string.must_be_in_library_to_edit
                 Error -> R.string.failed_to_update_cover
-            }
+            },
         )
     }
 
@@ -1511,18 +1502,14 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
                                 255
                             } else {
                                 179
-                            }
+                            },
                         )
                 }
                 binding.readerMenu.isVisible = true
                 val toolbarAnimation = AnimationUtils.loadAnimation(this, R.anim.enter_from_top)
-                toolbarAnimation.setAnimationListener(
-                    object : SimpleAnimationListener() {
-                        override fun onAnimationStart(animation: Animation) {
-                            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
-                        }
-                    }
-                )
+                toolbarAnimation.doOnStart {
+                    window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+                }
                 binding.appBar.startAnimation(toolbarAnimation)
             }
         } else if (!visible && (menuStickyVisible || menuVisible)) {
@@ -1588,7 +1575,7 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
             applicationContext,
             source.id,
             chapterUrl,
-            presenter.manga!!.title
+            presenter.manga!!.title,
         )
         startActivity(intent)
     }

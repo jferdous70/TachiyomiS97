@@ -9,7 +9,6 @@ import coil.imageLoader
 import coil.memory.MemoryCache
 import coil.request.CachePolicy
 import coil.request.ImageRequest
-import coil.request.Parameters
 import coil.request.SuccessResult
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.cache.CoverCache
@@ -22,7 +21,6 @@ import eu.kanade.tachiyomi.data.database.models.toMangaInfo
 import eu.kanade.tachiyomi.data.download.DownloadManager
 import eu.kanade.tachiyomi.data.download.model.Download
 import eu.kanade.tachiyomi.data.download.model.DownloadQueue
-import eu.kanade.tachiyomi.data.image.coil.MangaFetcher
 import eu.kanade.tachiyomi.data.library.CustomMangaManager
 import eu.kanade.tachiyomi.data.library.LibraryServiceListener
 import eu.kanade.tachiyomi.data.library.LibraryUpdateService
@@ -81,7 +79,7 @@ class MangaDetailsPresenter(
     val coverCache: CoverCache = Injekt.get(),
     val db: DatabaseHelper = Injekt.get(),
     private val downloadManager: DownloadManager = Injekt.get(),
-    chapterFilter: ChapterFilter = Injekt.get()
+    chapterFilter: ChapterFilter = Injekt.get(),
 ) : BaseCoroutinePresenter<MangaDetailsController>(), DownloadQueue.DownloadListener, LibraryServiceListener {
 
     private val customMangaManager: CustomMangaManager by injectLazy()
@@ -354,14 +352,11 @@ class MangaDetailsPresenter(
                     val request =
                         ImageRequest.Builder(preferences.context).data(manga)
                             .memoryCachePolicy(CachePolicy.DISABLED)
-                            .parameters(
-                                Parameters.Builder().set(MangaFetcher.onlyFetchRemotely, true)
-                                    .build()
-                            )
+                            .diskCachePolicy(CachePolicy.WRITE_ONLY)
                             .build()
 
                     if (Coil.imageLoader(preferences.context).execute(request) is SuccessResult) {
-                        preferences.context.imageLoader.memoryCache.remove(MemoryCache.Key(manga.key()))
+                        preferences.context.imageLoader.memoryCache?.remove(MemoryCache.Key(manga.key()))
                         withContext(Dispatchers.Main) {
                             controller?.setPaletteColor()
                         }
@@ -375,7 +370,7 @@ class MangaDetailsPresenter(
                     if (manga.shouldDownloadNewChapters(db, preferences)) {
                         downloadChapters(
                             newChapters.first.sortedBy { it.chapter_number }
-                                .map { it.toModel() }
+                                .map { it.toModel() },
                         )
                     }
                     mangaShortcutManager.updateShortcuts()
@@ -388,7 +383,7 @@ class MangaDetailsPresenter(
                     if (removedChapters.isNotEmpty()) {
                         withContext(Dispatchers.Main) {
                             controller?.showChaptersRemovedPopup(
-                                removedChapters
+                                removedChapters,
                             )
                         }
                     }
@@ -402,13 +397,13 @@ class MangaDetailsPresenter(
             if (chapterError != null) {
                 withContext(Dispatchers.Main) {
                     controller?.showError(
-                        trimException(chapterError!!)
+                        trimException(chapterError!!),
                     )
                 }
                 return@launch
             } else if (mangaError != null) withContext(Dispatchers.Main) {
                 controller?.showError(
-                    trimException(mangaError!!)
+                    trimException(mangaError!!),
                 )
             }
         }
@@ -479,7 +474,7 @@ class MangaDetailsPresenter(
         read: Boolean,
         deleteNow: Boolean = true,
         lastRead: Int? = null,
-        pagesLeft: Int? = null
+        pagesLeft: Int? = null,
     ) {
         presenterScope.launch(Dispatchers.IO) {
             selectedChapters.forEach {
@@ -549,7 +544,7 @@ class MangaDetailsPresenter(
     fun setFilters(
         unread: TriStateCheckBox.State,
         downloaded: TriStateCheckBox.State,
-        bookmarked: TriStateCheckBox.State
+        bookmarked: TriStateCheckBox.State,
     ) {
         manga.readFilter = when (unread) {
             TriStateCheckBox.State.CHECKED -> Manga.CHAPTER_SHOW_UNREAD
@@ -595,28 +590,28 @@ class MangaDetailsPresenter(
     fun setGlobalChapterFilters(
         unread: TriStateCheckBox.State,
         downloaded: TriStateCheckBox.State,
-        bookmarked: TriStateCheckBox.State
+        bookmarked: TriStateCheckBox.State,
     ) {
         preferences.filterChapterByRead().set(
             when (unread) {
                 TriStateCheckBox.State.CHECKED -> Manga.CHAPTER_SHOW_UNREAD
                 TriStateCheckBox.State.IGNORE -> Manga.CHAPTER_SHOW_READ
                 else -> Manga.SHOW_ALL
-            }
+            },
         )
         preferences.filterChapterByDownloaded().set(
             when (downloaded) {
                 TriStateCheckBox.State.CHECKED -> Manga.CHAPTER_SHOW_DOWNLOADED
                 TriStateCheckBox.State.IGNORE -> Manga.CHAPTER_SHOW_NOT_DOWNLOADED
                 else -> Manga.SHOW_ALL
-            }
+            },
         )
         preferences.filterChapterByBookmarked().set(
             when (bookmarked) {
                 TriStateCheckBox.State.CHECKED -> Manga.CHAPTER_SHOW_BOOKMARKED
                 TriStateCheckBox.State.IGNORE -> Manga.CHAPTER_SHOW_NOT_BOOKMARKED
                 else -> Manga.SHOW_ALL
-            }
+            },
         )
         preferences.hideChapterTitlesByDefault().set(manga.hideChapterTitles)
         manga.setFilterToGlobal()
@@ -736,7 +731,7 @@ class MangaDetailsPresenter(
         tags: Array<String>?,
         status: Int?,
         seriesType: Int?,
-        resetCover: Boolean = false
+        resetCover: Boolean = false,
     ) {
         if (manga.source == LocalSource.ID) {
             manga.title = if (title.isNullOrBlank()) manga.url else title.trim()
@@ -780,7 +775,7 @@ class MangaDetailsPresenter(
                 artist?.trimOrNull(),
                 description?.trimOrNull(),
                 genre,
-                if (status != this.manga.originalStatus) status else null
+                if (status != this.manga.originalStatus) status else null,
             )
             customMangaManager.saveMangaInfo(manga)
         }
@@ -838,7 +833,7 @@ class MangaDetailsPresenter(
             val directory = File(
                 Environment.getExternalStorageDirectory().absolutePath +
                     File.separator + Environment.DIRECTORY_PICTURES +
-                    File.separator + preferences.context.getString(R.string.app_name)
+                    File.separator + preferences.context.getString(R.string.app_name),
             )
             saveCover(directory)
             true

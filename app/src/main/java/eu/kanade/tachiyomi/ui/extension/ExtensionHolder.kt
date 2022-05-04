@@ -9,7 +9,7 @@ import androidx.core.text.color
 import androidx.core.text.scale
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
-import coil.clear
+import coil.dispose
 import coil.load
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.image.coil.CoverViewTarget
@@ -52,7 +52,7 @@ class ExtensionHolder(view: View, val adapter: ExtensionAdapter) :
                         binding.date.isVisible = true
                         binding.date.text = itemView.context.getString(
                             R.string.updated_,
-                            it.timeSpanFromNow
+                            it.timeSpanFromNow,
                         )
                         infoText.add("")
                     }
@@ -62,7 +62,7 @@ class ExtensionHolder(view: View, val adapter: ExtensionAdapter) :
                         binding.date.isVisible = true
                         binding.date.text = itemView.context.getString(
                             R.string.installed_,
-                            it.timeSpanFromNow
+                            it.timeSpanFromNow,
                         )
                         infoText.add("")
                     }
@@ -99,7 +99,7 @@ class ExtensionHolder(view: View, val adapter: ExtensionAdapter) :
         binding.installProgress.isVisible = item.sessionProgress != null
         binding.cancelButton.isVisible = item.sessionProgress != null
 
-        binding.sourceImage.clear()
+        binding.sourceImage.dispose()
 
         if (extension is Extension.Available) {
             binding.sourceImage.load(extension.iconUrl) {
@@ -136,7 +136,7 @@ class ExtensionHolder(view: View, val adapter: ExtensionAdapter) :
                     InstallStep.Installed -> R.string.installed
                     InstallStep.Error -> R.string.retry
                     else -> return@with
-                }
+                },
             )
             if (installStep != InstallStep.Error) {
                 isEnabled = false

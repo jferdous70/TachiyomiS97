@@ -129,7 +129,7 @@ dependencies {
 
     implementation("androidx.multidex:multidex:2.0.1")
 
-    implementation("com.google.firebase:firebase-core:19.0.1")
+    implementation("com.google.firebase:firebase-core:20.1.2")
 
     val lifecycleVersion = "2.4.0-rc01"
     kapt("androidx.lifecycle:lifecycle-compiler:$lifecycleVersion")
@@ -146,10 +146,11 @@ dependencies {
     implementation("com.fredporciuncula:flow-preferences:1.6.0")
 
     // Network client
-    implementation("com.squareup.okhttp3:okhttp:${Versions.okhttp}")
-    implementation("com.squareup.okhttp3:logging-interceptor:${Versions.okhttp}")
-    implementation("com.squareup.okhttp3:okhttp-dnsoverhttps:${Versions.okhttp}")
-    implementation("com.squareup.okio:okio:2.10.0")
+    val okhttpVersion = "4.9.3"
+    implementation("com.squareup.okhttp3:okhttp:$okhttpVersion")
+    implementation("com.squareup.okhttp3:logging-interceptor:$okhttpVersion")
+    implementation("com.squareup.okhttp3:okhttp-dnsoverhttps:$okhttpVersion")
+    implementation("com.squareup.okio:okio:3.0.0")
 
     // Chucker
     val chuckerVersion = "3.5.2"
@@ -172,13 +173,14 @@ dependencies {
     // Disk
     implementation("com.jakewharton:disklrucache:2.0.2")
     implementation("com.github.tachiyomiorg:unifile:17bec43")
-    implementation("com.github.junrar:junrar:7.4.0")
+    implementation("com.github.junrar:junrar:7.5.0")
 
     // HTML parser
     implementation("org.jsoup:jsoup:1.14.3")
 
     // Job scheduling
     implementation("androidx.work:work-runtime-ktx:2.6.0")
+    implementation("com.google.guava:guava:31.1-android")
 
     implementation("com.google.android.gms:play-services-gcm:17.0.0")
 
@@ -199,7 +201,7 @@ dependencies {
     implementation("com.github.inorichi.injekt:injekt-core:65b0440")
 
     // Image library
-    val coilVersion = "1.3.2"
+    val coilVersion = "2.0.0-rc03"
     implementation("io.coil-kt:coil:$coilVersion")
     implementation("io.coil-kt:coil-gif:$coilVersion")
     implementation("io.coil-kt:coil-svg:$coilVersion")
@@ -213,8 +215,9 @@ dependencies {
     // UI
     implementation("com.dmitrymalkovich.android:material-design-dimens:1.4")
     implementation("br.com.simplepass:loading-button-android:2.2.0")
-    implementation("com.mikepenz:fastadapter:${Versions.fastAdapter}")
-    implementation("com.mikepenz:fastadapter-extensions-binding:${Versions.fastAdapter}")
+    val fastAdapterVersion = "5.6.0"
+    implementation("com.mikepenz:fastadapter:$fastAdapterVersion")
+    implementation("com.mikepenz:fastadapter-extensions-binding:$fastAdapterVersion")
     implementation("com.github.arkon.FlexibleAdapter:flexible-adapter:c8013533")
     implementation("com.github.arkon.FlexibleAdapter:flexible-adapter-ui:c8013533")
     implementation("com.nononsenseapps:filepicker:2.5.2")
@@ -225,32 +228,17 @@ dependencies {
     implementation("com.github.chrisbanes:PhotoView:2.3.0")
     implementation("com.github.tachiyomiorg:DirectionalViewPager:1.0.0")
     implementation("com.github.florent37:viewtooltip:1.2.2")
-    implementation("com.getkeepsafe.taptargetview:taptargetview:1.13.0")
+    implementation("com.getkeepsafe.taptargetview:taptargetview:1.13.3")
 
     // Conductor
     val conductorVersion = "3.0.0"
     implementation("com.bluelinelabs:conductor:$conductorVersion")
     implementation("com.github.tachiyomiorg:conductor-support-preference:$conductorVersion")
 
-    // RxBindings
-    implementation("com.jakewharton.rxbinding:rxbinding-kotlin:${Versions.RX_BINDING}")
-    implementation("com.jakewharton.rxbinding:rxbinding-appcompat-v7-kotlin:${Versions.RX_BINDING}")
-    implementation("com.jakewharton.rxbinding:rxbinding-support-v4-kotlin:${Versions.RX_BINDING}")
-    implementation("com.jakewharton.rxbinding:rxbinding-recyclerview-v7-kotlin:${Versions.RX_BINDING}")
-
     // Shizuku
     val shizukuVersion = "12.1.0"
     implementation("dev.rikka.shizuku:api:$shizukuVersion")
     implementation("dev.rikka.shizuku:provider:$shizukuVersion")
-
-    // Tests
-    testImplementation("junit:junit:4.13.2")
-    testImplementation("org.assertj:assertj-core:3.16.1")
-    testImplementation("org.mockito:mockito-core:1.10.19")
-
-    testImplementation("org.robolectric:robolectric:${Versions.ROBO_ELECTRIC}")
-    testImplementation("org.robolectric:shadows-multidex:${Versions.ROBO_ELECTRIC}")
-    testImplementation("org.robolectric:shadows-play-services:${Versions.ROBO_ELECTRIC}")
 
     implementation(kotlin("stdlib", org.jetbrains.kotlin.config.KotlinCompilerVersion.VERSION))
 
@@ -259,10 +247,10 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines")
 
     // Crash reports
-    implementation("ch.acra:acra-http:5.8.1")
+    implementation("ch.acra:acra-http:5.9.3")
 
     // Text distance
-    implementation("info.debatty:java-string-similarity:1.2.1")
+    implementation("info.debatty:java-string-similarity:2.0.0")
 
     implementation("com.google.android.gms:play-services-oss-licenses:${Versions.OSS_LICENSE}")
 
@@ -283,6 +271,7 @@ tasks {
             "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
             "-opt-in=kotlinx.coroutines.InternalCoroutinesApi",
             "-opt-in=kotlinx.serialization.ExperimentalSerializationApi",
+            "-opt-in=coil.annotation.ExperimentalCoilApi",
         )
     }
 

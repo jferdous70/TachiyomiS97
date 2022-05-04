@@ -16,7 +16,7 @@ import androidx.annotation.CallSuper
 import androidx.annotation.StyleRes
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.core.view.isVisible
-import coil.clear
+import coil.dispose
 import coil.imageLoader
 import coil.request.CachePolicy
 import coil.request.ImageRequest
@@ -42,7 +42,7 @@ open class ReaderPageImageView @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     @AttrRes defStyleAttrs: Int = 0,
     @StyleRes defStyleRes: Int = 0,
-    private val isWebtoon: Boolean = false
+    private val isWebtoon: Boolean = false,
 ) : FrameLayout(context, attrs, defStyleAttrs, defStyleRes) {
 
     private var pageView: View? = null
@@ -98,7 +98,7 @@ open class ReaderPageImageView @JvmOverloads constructor(
     fun recycle() = pageView?.let {
         when (it) {
             is SubsamplingScaleImageView -> it.recycle()
-            is AppCompatImageView -> it.clear()
+            is AppCompatImageView -> it.dispose()
         }
         it.isVisible = false
     }
@@ -125,7 +125,7 @@ open class ReaderPageImageView @JvmOverloads constructor(
                     override fun onCenterChanged(newCenter: PointF?, origin: Int) {
                         // Not used
                     }
-                }
+                },
             )
             setOnClickListener { this@ReaderPageImageView.onViewClicked() }
         }
@@ -147,7 +147,7 @@ open class ReaderPageImageView @JvmOverloads constructor(
 
     private fun setNonAnimatedImage(
         image: Any,
-        config: Config
+        config: Config,
     ) = (pageView as? SubsamplingScaleImageView)?.apply {
         setDoubleTapZoomDuration(config.zoomDuration.getSystemScaledDuration())
         setMinimumScaleType(config.minimumScaleType)
@@ -164,7 +164,7 @@ open class ReaderPageImageView @JvmOverloads constructor(
                 override fun onImageLoadError(e: Exception) {
                     this@ReaderPageImageView.onImageLoadError()
                 }
-            }
+            },
         )
 
         when (image) {
@@ -207,7 +207,7 @@ open class ReaderPageImageView @JvmOverloads constructor(
                             this@ReaderPageImageView.onViewClicked()
                             return super.onSingleTapConfirmed(e)
                         }
-                    }
+                    },
                 )
                 setOnScaleChangeListener { _, _, _ ->
                     this@ReaderPageImageView.onScaleChanged(scale)
@@ -219,7 +219,7 @@ open class ReaderPageImageView @JvmOverloads constructor(
 
     private fun setAnimatedImage(
         image: Any,
-        config: Config
+        config: Config,
     ) = (pageView as? AppCompatImageView)?.apply {
         if (this is PhotoView) {
             setZoomTransitionDuration(config.zoomDuration.getSystemScaledDuration())
@@ -243,7 +243,7 @@ open class ReaderPageImageView @JvmOverloads constructor(
                 },
                 onError = {
                     this@ReaderPageImageView.onImageLoadError()
-                }
+                },
             )
             .crossfade(false)
             .build()

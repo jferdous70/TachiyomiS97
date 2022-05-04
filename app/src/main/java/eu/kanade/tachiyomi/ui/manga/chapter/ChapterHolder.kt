@@ -4,6 +4,8 @@ import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.content.res.ColorStateList
 import android.view.View
+import androidx.core.animation.doOnEnd
+import androidx.core.animation.doOnStart
 import androidx.core.view.isVisible
 import androidx.core.widget.TextViewCompat
 import eu.kanade.tachiyomi.R
@@ -15,12 +17,10 @@ import eu.kanade.tachiyomi.ui.manga.MangaDetailsAdapter
 import eu.kanade.tachiyomi.util.chapter.ChapterUtil
 import eu.kanade.tachiyomi.util.system.dpToPx
 import eu.kanade.tachiyomi.util.system.getResourceColor
-import eu.kanade.tachiyomi.widget.EndAnimatorListener
-import eu.kanade.tachiyomi.widget.StartAnimatorListener
 
 class ChapterHolder(
     view: View,
-    private val adapter: MangaDetailsAdapter
+    private val adapter: MangaDetailsAdapter,
 ) : BaseChapterHolder(view, adapter) {
 
     private val binding = ChaptersItemBinding.bind(view)
@@ -58,15 +58,15 @@ class ChapterHolder(
                 itemView.resources.getQuantityString(
                     R.plurals.pages_left,
                     chapter.pages_left,
-                    chapter.pages_left
-                )
+                    chapter.pages_left,
+                ),
             )
         } else if (showPagesLeft) {
             statuses.add(
                 itemView.context.getString(
                     R.string.page_,
-                    chapter.last_page_read + 1
-                )
+                    chapter.last_page_read + 1,
+                ),
             )
         }
 
@@ -76,10 +76,10 @@ class ChapterHolder(
 
         if (binding.frontView.translationX == 0f) {
             binding.read.setImageResource(
-                if (item.read) R.drawable.ic_eye_off_24dp else R.drawable.ic_eye_24dp
+                if (item.read) R.drawable.ic_eye_off_24dp else R.drawable.ic_eye_24dp,
             )
             binding.bookmark.setImageResource(
-                if (item.bookmark) R.drawable.ic_bookmark_off_24dp else R.drawable.ic_bookmark_24dp
+                if (item.bookmark) R.drawable.ic_bookmark_off_24dp else R.drawable.ic_bookmark_24dp,
             )
         }
         // this will color the scanlator the same bookmarks
@@ -87,7 +87,7 @@ class ChapterHolder(
             binding.chapterScanlator,
             item,
             showBookmark = false,
-            hideStatus = isLocked
+            hideStatus = isLocked,
         )
         binding.chapterScanlator.text = statuses.joinToString(" • ")
 
@@ -108,7 +108,7 @@ class ChapterHolder(
         val animatorSet = AnimatorSet()
         val anim1 = slideAnimation(0f, slide)
         anim1.startDelay = 1000
-        anim1.addListener(StartAnimatorListener { binding.startView.isVisible = true })
+        anim1.doOnStart { binding.startView.isVisible = true }
         val anim2 = slideAnimation(slide, -slide)
         anim2.duration = 600
         anim2.startDelay = 500
@@ -121,11 +121,7 @@ class ChapterHolder(
         val anim3 = slideAnimation(-slide, 0f)
         anim3.startDelay = 750
         animatorSet.playSequentially(anim1, anim2, anim3)
-        animatorSet.addListener(
-            EndAnimatorListener {
-                adapter.hasShownSwipeTut.set(true)
-            }
-        )
+        animatorSet.doOnEnd { adapter.hasShownSwipeTut.set(true) }
         animatorSet.start()
     }
 
@@ -157,11 +153,11 @@ class ChapterHolder(
         adapter.delegate.accentColor()?.let {
             binding.startView.backgroundTintList = ColorStateList.valueOf(it)
             binding.bookmark.imageTintList = ColorStateList.valueOf(
-                context.getResourceColor(android.R.attr.textColorPrimaryInverse)
+                context.getResourceColor(android.R.attr.textColorPrimaryInverse),
             )
             TextViewCompat.setCompoundDrawableTintList(
                 binding.chapterTitle,
-                ColorStateList.valueOf(it)
+                ColorStateList.valueOf(it),
             )
             colorSecondary = it
         }

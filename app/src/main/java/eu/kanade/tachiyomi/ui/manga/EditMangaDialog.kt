@@ -13,14 +13,14 @@ import android.view.inputmethod.InputMethodManager
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.children
 import androidx.core.view.isVisible
-import coil.loadAny
+import coil.load
 import coil.request.Parameters
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.database.DatabaseHelper
 import eu.kanade.tachiyomi.data.database.models.Manga
-import eu.kanade.tachiyomi.data.image.coil.MangaFetcher
+import eu.kanade.tachiyomi.data.image.coil.MangaCoverFetcher
 import eu.kanade.tachiyomi.data.image.coil.loadManga
 import eu.kanade.tachiyomi.databinding.EditMangaDialogBinding
 import eu.kanade.tachiyomi.source.LocalSource
@@ -54,7 +54,7 @@ class EditMangaDialog : DialogController {
         Bundle()
             .apply {
                 putLong(KEY_MANGA, manga.id!!)
-            }
+            },
     ) {
         targetController = target
         this.manga = manga
@@ -122,7 +122,7 @@ class EditMangaDialog : DialogController {
                 binding.mangaDescription.hint =
                     "${resources?.getString(R.string.description)}: ${manga.originalDescription?.replace(
                         "\n",
-                        " "
+                        " ",
                     )?.chop(20)}"
             }
         }
@@ -152,7 +152,7 @@ class EditMangaDialog : DialogController {
                 R.string.clear_tags
             } else {
                 R.string.reset_tags
-            }
+            },
         )
         binding.addTagChip.setOnClickListener {
             binding.addTagChip.isVisible = false
@@ -176,11 +176,11 @@ class EditMangaDialog : DialogController {
 
         binding.resetCover.isVisible = !isLocal
         binding.resetCover.setOnClickListener {
-            binding.mangaCover.loadAny(
+            binding.mangaCover.load(
                 manga,
                 builder = {
-                    parameters(Parameters.Builder().set(MangaFetcher.realCover, true).build())
-                }
+                    parameters(Parameters.Builder().set(MangaCoverFetcher.useCustomCover, false).build())
+                },
             )
             customCoverUri = null
             willResetCover = true
@@ -193,7 +193,7 @@ class EditMangaDialog : DialogController {
         inputMethodManager.showSoftInput(
             binding.addTagEditText,
             WindowManager.LayoutParams
-                .SOFT_INPUT_ADJUST_PAN
+                .SOFT_INPUT_ADJUST_PAN,
         )
     }
 
@@ -227,23 +227,23 @@ class EditMangaDialog : DialogController {
                                 dark -> 0.225f
                                 else -> 0.85f
                             }
-                            )
-                    )
+                            ),
+                    ),
                 ),
-                199
+                199,
             )
             val textColor = ColorUtils.HSLToColor(
                 floatArrayOf(
                     accentArray[0],
                     accentArray[1],
-                    if (dark) 0.945f else 0.175f
-                )
+                    if (dark) 0.945f else 0.175f,
+                ),
             )
             genres.map { genreText ->
                 val chip = LayoutInflater.from(binding.root.context).inflate(
                     R.layout.genre_chip,
                     this,
-                    false
+                    false,
                 ) as Chip
                 val id = View.generateViewId()
                 chip.id = id
@@ -257,9 +257,9 @@ class EditMangaDialog : DialogController {
                     binding.seriesType.setSelection(
                         manga.seriesType(
                             customTags = tags.joinToString(
-                                ", "
-                            )
-                        ) - 1
+                                ", ",
+                            ),
+                        ) - 1,
                     )
                 }
                 this.addView(chip)
@@ -288,7 +288,7 @@ class EditMangaDialog : DialogController {
 
     fun updateCover(uri: Uri) {
         willResetCover = false
-        binding.mangaCover.loadAny(uri)
+        binding.mangaCover.load(uri)
         customCoverUri = uri
     }
 
@@ -302,7 +302,7 @@ class EditMangaDialog : DialogController {
             binding.mangaGenresTags.tags,
             binding.mangaStatus.selectedPosition,
             if (binding.resetsReadingMode.isVisible) binding.seriesType.selectedPosition + 1 else null,
-            willResetCover
+            willResetCover,
         )
     }
 

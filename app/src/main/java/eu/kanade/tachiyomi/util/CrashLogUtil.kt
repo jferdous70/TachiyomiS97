@@ -23,7 +23,7 @@ class CrashLogUtil(private val context: Context) {
     fun dumpLogs() {
         try {
             val file = context.createFileInCacheDir("tachiyomi_crash_logs.txt")
-            file.appendText(getDebugInfo() + "\n")
+            file.appendText(getDebugInfo() + "\n\n")
             Runtime.getRuntime().exec("logcat *:E -d -f ${file.absolutePath}")
 
             showNotification(file.getUriCompat(context))
@@ -55,13 +55,13 @@ class CrashLogUtil(private val context: Context) {
             addAction(
                 R.drawable.ic_bug_report_24dp,
                 context.getString(R.string.open_log),
-                NotificationReceiver.openErrorOrSkippedLogPendingActivity(context, uri)
+                NotificationReceiver.openErrorOrSkippedLogPendingActivity(context, uri),
             )
 
             addAction(
                 R.drawable.ic_share_24dp,
                 context.getString(R.string.share),
-                NotificationReceiver.shareCrashLogPendingBroadcast(context, uri, Notifications.ID_CRASH_LOGS)
+                NotificationReceiver.shareCrashLogPendingBroadcast(context, uri, Notifications.ID_CRASH_LOGS),
             )
 
             context.notificationManager.notify(Notifications.ID_CRASH_LOGS, build())

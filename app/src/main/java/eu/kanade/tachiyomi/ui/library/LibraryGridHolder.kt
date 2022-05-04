@@ -10,7 +10,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.isVisible
 import androidx.core.view.marginBottom
 import androidx.core.view.updateLayoutParams
-import coil.clear
+import coil.dispose
 import coil.size.Precision
 import coil.size.Scale
 import eu.kanade.tachiyomi.R
@@ -37,7 +37,7 @@ class LibraryGridHolder(
     private val view: View,
     adapter: LibraryCategoryAdapter,
     compact: Boolean,
-    val fixedSize: Boolean
+    val fixedSize: Boolean,
 ) : LibraryHolder(view, adapter) {
 
     private val binding = MangaGridItemBinding.bind(view)
@@ -73,14 +73,14 @@ class LibraryGridHolder(
         val mangaColor = item.manga.dominantCoverColors
         binding.coverConstraint.backgroundColor = mangaColor?.first ?: itemView.context.getResourceColor(R.attr.background)
         binding.behindTitle.setTextColor(
-            mangaColor?.second ?: itemView.context.getResourceColor(R.attr.colorOnBackground)
+            mangaColor?.second ?: itemView.context.getResourceColor(R.attr.colorOnBackground),
         )
         val authorArtist = if (item.manga.author == item.manga.artist || item.manga.artist.isNullOrBlank()) {
             item.manga.author?.trim() ?: ""
         } else {
             listOfNotNull(
                 item.manga.author?.trim()?.takeIf { it.isNotBlank() },
-                item.manga.artist?.trim()?.takeIf { it.isNotBlank() }
+                item.manga.artist?.trim()?.takeIf { it.isNotBlank() },
             ).joinToString(", ")
         }
         binding.subtitle.text = authorArtist.highlightText(item.filter, color)
@@ -99,7 +99,7 @@ class LibraryGridHolder(
         setSelected(adapter.isSelected(flexibleAdapterPosition))
 
         // Update the cover.
-        binding.coverThumbnail.clear()
+        binding.coverThumbnail.dispose()
         setCover(item.manga)
     }
 
@@ -134,7 +134,7 @@ class LibraryGridHolder(
                     if (!fixedSize && !hasRatio && MangaCoverMetadata.getRatio(manga) != null) {
                         setFreeformCoverRatio(manga)
                     }
-                }
+                },
             )
         }
     }

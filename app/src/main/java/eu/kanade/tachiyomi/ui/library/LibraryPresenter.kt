@@ -10,7 +10,6 @@ import eu.kanade.tachiyomi.data.database.models.LibraryManga
 import eu.kanade.tachiyomi.data.database.models.Manga
 import eu.kanade.tachiyomi.data.database.models.MangaCategory
 import eu.kanade.tachiyomi.data.download.DownloadManager
-import eu.kanade.tachiyomi.data.image.coil.MangaFetcher
 import eu.kanade.tachiyomi.data.preference.DelayedLibrarySuggestionsJob
 import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.data.preference.minusAssign
@@ -61,7 +60,7 @@ class LibraryPresenter(
     private val coverCache: CoverCache = Injekt.get(),
     val sourceManager: SourceManager = Injekt.get(),
     private val downloadManager: DownloadManager = Injekt.get(),
-    private val chapterFilter: ChapterFilter = Injekt.get()
+    private val chapterFilter: ChapterFilter = Injekt.get(),
 ) : BaseCoroutinePresenter<LibraryController>() {
 
     private val context = preferences.context
@@ -184,7 +183,7 @@ class LibraryPresenter(
         val category = categories.find { it.order == order }?.id ?: return
         currentCategory = category
         controller?.onNextLibraryUpdate(
-            sectionedLibraryItems[currentCategory] ?: blankItem()
+            sectionedLibraryItems[currentCategory] ?: blankItem(),
         )
     }
 
@@ -192,8 +191,8 @@ class LibraryPresenter(
         return listOf(
             LibraryItem(
                 LibraryManga.createBlank(id),
-                LibraryHeaderItem({ getCategory(id) }, id)
-            )
+                LibraryHeaderItem({ getCategory(id) }, id),
+            ),
         )
     }
 
@@ -208,7 +207,7 @@ class LibraryPresenter(
             if (!show) sectionedLibraryItems[currentCategory]
                 ?: sectionedLibraryItems[categories.first().id] ?: blankItem()
             else libraryItems,
-            true
+            true,
         )
     }
 
@@ -230,7 +229,7 @@ class LibraryPresenter(
                 if (!showAll) sectionedLibraryItems[currentCategory]
                     ?: sectionedLibraryItems[categories.first().id] ?: blankItem()
                 else libraryItems,
-                freshStart
+                freshStart,
             )
         }
     }
@@ -272,7 +271,7 @@ class LibraryPresenter(
                             filterCompleted,
                             filterTracked,
                             filterMangaType,
-                            filterTrackers
+                            filterTrackers,
                         )
                     }
                 }
@@ -291,7 +290,7 @@ class LibraryPresenter(
                 filterCompleted,
                 filterTracked,
                 filterMangaType,
-                filterTrackers
+                filterTrackers,
             )
             if (matches) {
                 missingCategorySet.remove(item.manga.category)
@@ -313,7 +312,7 @@ class LibraryPresenter(
         filterCompleted: Int,
         filterTracked: Int,
         filterMangaType: Int,
-        filterTrackers: String
+        filterTrackers: String,
     ): Boolean {
         if (filterUnread == STATE_INCLUDE && item.manga.unread == 0) return false
         if (filterUnread == STATE_EXCLUDE && item.manga.unread > 0) return false
@@ -552,7 +551,7 @@ class LibraryPresenter(
             val categoryAll = Category.createAll(
                 context,
                 preferences.librarySortingMode().get(),
-                preferences.librarySortingAscending().get()
+                preferences.librarySortingAscending().get(),
             )
             val catItemAll = LibraryHeaderItem({ categoryAll }, -1)
             val categorySet = mutableSetOf<Int>()
@@ -588,7 +587,7 @@ class LibraryPresenter(
                     ) {
                         val headerItem = headerItems[catId]
                         if (headerItem != null) items.add(
-                            LibraryItem(LibraryManga.createBlank(catId), headerItem)
+                            LibraryItem(LibraryManga.createBlank(catId), headerItem),
                         )
                     } else if (catId in categoriesHidden && showAll && categories.size > 1) {
                         val mangaToRemove = items.filter { it.manga.category == catId }
@@ -599,7 +598,7 @@ class LibraryPresenter(
                         items.removeAll(mangaToRemove)
                         val headerItem = headerItems[catId]
                         if (headerItem != null) items.add(
-                            LibraryItem(LibraryManga.createHide(catId, mergedTitle, mangaToRemove.size), headerItem)
+                            LibraryItem(LibraryManga.createHide(catId, mergedTitle, mangaToRemove.size), headerItem),
                         )
                     }
                 }
@@ -627,7 +626,7 @@ class LibraryPresenter(
     }
 
     private fun getCustomMangaItems(libraryManga: List<LibraryManga>): Pair<List<LibraryItem>,
-        List<Category>> {
+        List<Category>,> {
         val tagItems: MutableMap<String, LibraryHeaderItem> = mutableMapOf()
 
         // internal function to make headers
@@ -678,8 +677,8 @@ class LibraryPresenter(
                     listOf(
                         LibraryItem(
                             manga,
-                            makeOrGetHeader("${source.name}$sourceSplitter${source.id}")
-                        )
+                            makeOrGetHeader("${source.name}$sourceSplitter${source.id}"),
+                        ),
                     )
                 }
                 else -> listOf(LibraryItem(manga, makeOrGetHeader(mapStatus(manga.status))))
@@ -691,7 +690,7 @@ class LibraryPresenter(
             Category.createCustom(
                 item.key,
                 preferences.librarySortingMode().get(),
-                preferences.librarySortingAscending().get()
+                preferences.librarySortingAscending().get(),
             ).apply {
                 id = item.value.catId
                 if (name.contains(sourceSplitter)) {
@@ -723,7 +722,7 @@ class LibraryPresenter(
                 sectionedLibraryItems[catId] = mangaToRemove
                 items.removeAll { it.header.catId == catId }
                 if (headerItem != null) items.add(
-                    LibraryItem(LibraryManga.createHide(catId, mergedTitle, mangaToRemove.size), headerItem)
+                    LibraryItem(LibraryManga.createHide(catId, mergedTitle, mangaToRemove.size), headerItem),
                 )
             }
         }
@@ -742,7 +741,7 @@ class LibraryPresenter(
                 SManga.CANCELLED -> R.string.cancelled
                 SManga.ON_HIATUS -> R.string.on_hiatus
                 else -> R.string.unknown
-            }
+            },
         )
     }
 
@@ -941,7 +940,7 @@ class LibraryPresenter(
     fun moveMangaToCategory(
         manga: LibraryManga,
         catId: Int?,
-        mangaIds: List<Long>
+        mangaIds: List<Long>,
     ) {
         presenterScope.launch {
             val categoryId = catId ?: return@launch
@@ -1028,13 +1027,13 @@ class LibraryPresenter(
             if (allCategoriesExpanded()) {
                 preferences.collapsedDynamicCategories() += categories.map {
                     getDynamicCategoryName(
-                        it
+                        it,
                     )
                 }
             } else {
                 preferences.collapsedDynamicCategories() -= categories.map {
                     getDynamicCategoryName(
-                        it
+                        it,
                     )
                 }
             }
@@ -1067,7 +1066,7 @@ class LibraryPresenter(
 
     fun markReadStatus(
         mangaList: List<Manga>,
-        markRead: Boolean
+        markRead: Boolean,
     ): HashMap<Manga, List<Chapter>> {
         val mapMangaChapters = HashMap<Manga, List<Chapter>>()
         presenterScope.launchIO {
@@ -1100,7 +1099,7 @@ class LibraryPresenter(
 
     fun confirmMarkReadStatus(
         mangaList: HashMap<Manga, List<Chapter>>,
-        markRead: Boolean
+        markRead: Boolean,
     ) {
         if (preferences.removeAfterMarkedAsRead() && markRead) {
             mangaList.forEach { (manga, oldChapters) ->
@@ -1140,7 +1139,7 @@ class LibraryPresenter(
         suspend fun setSearchSuggestion(
             preferences: PreferencesHelper,
             db: DatabaseHelper,
-            sourceManager: SourceManager
+            sourceManager: SourceManager,
         ) {
             val random: Random = run {
                 val cal = Calendar.getInstance()
@@ -1163,7 +1162,7 @@ class LibraryPresenter(
                         val distinctSources = libraryManga.distinctBy { it.source }
                         val randomSource =
                             sourceManager.get(
-                                distinctSources.randomOrNull(random)?.source ?: 0L
+                                distinctSources.randomOrNull(random)?.source ?: 0L,
                             )?.name
                         randomSource?.chopByWords(30)
                     }
@@ -1196,7 +1195,7 @@ class LibraryPresenter(
                         }
                     }
                     else -> ""
-                } ?: ""
+                } ?: "",
             )
 
             if (preferences.showLibrarySearchSuggestions().isNotSet()) {
@@ -1222,10 +1221,9 @@ class LibraryPresenter(
 
         suspend fun updateRatiosAndColors() {
             val db: DatabaseHelper = Injekt.get()
-            val mangaFetcher = MangaFetcher()
             val libraryManga = db.getFavoriteMangas().executeOnIO()
             libraryManga.forEach { manga ->
-                mangaFetcher.setRatioAndColors(manga)
+                try { withUIContext { MangaCoverMetadata.setRatioAndColors(manga) } } catch (_: Exception) { }
             }
             MangaCoverMetadata.savePrefs()
         }

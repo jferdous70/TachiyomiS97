@@ -5,6 +5,7 @@ import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.database.DatabaseHelper
 import eu.kanade.tachiyomi.data.database.models.Category
 import eu.kanade.tachiyomi.data.library.LibraryUpdateJob
+import eu.kanade.tachiyomi.data.preference.DEVICE_BATTERY_NOT_LOW
 import eu.kanade.tachiyomi.data.preference.DEVICE_CHARGING
 import eu.kanade.tachiyomi.data.preference.DEVICE_ONLY_ON_WIFI
 import eu.kanade.tachiyomi.data.preference.DelayedLibrarySuggestionsJob
@@ -113,7 +114,7 @@ class SettingsLibraryController : SettingsController() {
                     R.string.daily,
                     R.string.every_2_days,
                     R.string.every_3_days,
-                    R.string.weekly
+                    R.string.weekly,
                 )
                 entryValues = listOf(0, 12, 24, 48, 72, 168)
                 defaultValue = 24
@@ -132,8 +133,8 @@ class SettingsLibraryController : SettingsController() {
             multiSelectListPreferenceMat(activity) {
                 bindTo(preferences.libraryUpdateDeviceRestriction())
                 titleRes = R.string.library_update_restriction
-                entriesRes = arrayOf(R.string.wifi, R.string.charging)
-                entryValues = listOf(DEVICE_ONLY_ON_WIFI, DEVICE_CHARGING)
+                entriesRes = arrayOf(R.string.wifi, R.string.charging, R.string.battery_not_low)
+                entryValues = listOf(DEVICE_ONLY_ON_WIFI, DEVICE_CHARGING, DEVICE_BATTERY_NOT_LOW)
                 preSummaryRes = R.string.restrictions_
                 noSelectionRes = R.string.none
 
@@ -154,7 +155,7 @@ class SettingsLibraryController : SettingsController() {
                 entriesRes = arrayOf(
                     R.string.pref_update_only_completely_read,
                     R.string.pref_update_only_started,
-                    R.string.pref_update_only_non_completed
+                    R.string.pref_update_only_non_completed,
                 )
                 entryValues = listOf(MANGA_HAS_UNREAD, MANGA_NON_READ, MANGA_NON_COMPLETED)
                 noSelectionRes = R.string.none

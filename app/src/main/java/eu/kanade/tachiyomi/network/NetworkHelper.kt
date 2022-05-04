@@ -38,7 +38,7 @@ class NetworkHelper(val context: Context) {
 //                                .maxContentLength(250000L)
 //                                .redactHeaders(emptySet())
 //                                .alwaysReadResponseBody(false)
-//                                .build()
+//                                .build(),
 //                        )
                     }
 
@@ -54,8 +54,6 @@ class NetworkHelper(val context: Context) {
         }
 
     val client by lazy { baseClientBuilder.cache(Cache(cacheDir, cacheSize)).build() }
-
-    val coilClient by lazy { baseClientBuilder.cache(CoilUtils.createDefaultCache(context)).build() }
 
     val cloudflareClient by lazy {
         client.newBuilder()

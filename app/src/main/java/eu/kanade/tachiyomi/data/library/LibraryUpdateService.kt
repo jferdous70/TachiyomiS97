@@ -10,7 +10,6 @@ import androidx.work.NetworkType
 import coil.Coil
 import coil.request.CachePolicy
 import coil.request.ImageRequest
-import coil.request.Parameters
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.cache.CoverCache
 import eu.kanade.tachiyomi.data.database.DatabaseHelper
@@ -21,7 +20,6 @@ import eu.kanade.tachiyomi.data.database.models.Manga
 import eu.kanade.tachiyomi.data.database.models.toMangaInfo
 import eu.kanade.tachiyomi.data.download.DownloadManager
 import eu.kanade.tachiyomi.data.download.DownloadService
-import eu.kanade.tachiyomi.data.image.coil.MangaFetcher
 import eu.kanade.tachiyomi.data.library.LibraryUpdateService.Companion.start
 import eu.kanade.tachiyomi.data.notification.Notifications
 import eu.kanade.tachiyomi.data.preference.MANGA_HAS_UNREAD
@@ -78,7 +76,7 @@ class LibraryUpdateService(
     val preferences: PreferencesHelper = Injekt.get(),
     val downloadManager: DownloadManager = Injekt.get(),
     val trackManager: TrackManager = Injekt.get(),
-    private val mangaShortcutManager: MangaShortcutManager = Injekt.get()
+    private val mangaShortcutManager: MangaShortcutManager = Injekt.get(),
 ) : Service() {
 
     /**
@@ -374,7 +372,7 @@ class LibraryUpdateService(
             val skippedFile = writeErrorFile(
                 skippedUpdates,
                 "skipped",
-                getString(R.string.learn_more_at_, LibraryUpdateNotifier.HELP_SKIPPED_URL)
+                getString(R.string.learn_more_at_, LibraryUpdateNotifier.HELP_SKIPPED_URL),
             ).getUriCompat(this)
             notifier.showUpdateSkippedNotification(skippedUpdates.map { it.key.title }, skippedFile)
         }
@@ -410,7 +408,7 @@ class LibraryUpdateService(
     private suspend fun updateMangaChapters(
         manga: LibraryManga,
         progress: Int,
-        shouldDownload: Boolean
+        shouldDownload: Boolean,
     ):
         Boolean {
         try {
@@ -442,7 +440,7 @@ class LibraryUpdateService(
                     }
                 }
                 if (newChapters.first.size + newChapters.second.size > 0) listener?.onUpdateManga(
-                    manga
+                    manga,
                 )
             }
             return hasDownloads
@@ -481,7 +479,7 @@ class LibraryUpdateService(
                         notifier.showProgressNotification(
                             manga,
                             count.andIncrement,
-                            mangaToUpdate.size
+                            mangaToUpdate.size,
                         )
 
                         val networkManga = try {
@@ -505,7 +503,7 @@ class LibraryUpdateService(
                                 val request =
                                     ImageRequest.Builder(this@LibraryUpdateService).data(manga)
                                         .memoryCachePolicy(CachePolicy.DISABLED)
-                                        .parameters(Parameters.Builder().set(MangaFetcher.onlyFetchRemotely, true).build())
+                                        .diskCachePolicy(CachePolicy.WRITE_ONLY)
                                         .build()
                                 Coil.imageLoader(this@LibraryUpdateService).execute(request)
                             }
@@ -562,6 +560,7 @@ class LibraryUpdateService(
             if (errors.isNotEmpty()) {
                 val file = createFileInCacheDir("tachiyomi_update_$fileName.txt")
                 file.bufferedWriter().use { out ->
+                    additionalInfo?.let { out.write("$it\n\n") }
                     // Error file format:
                     // ! Error
                     //   # Source
@@ -576,7 +575,6 @@ class LibraryUpdateService(
                             }
                         }
                     }
-                    additionalInfo?.let { out.write("\n$it") }
                 }
                 return file
             }
@@ -628,7 +626,7 @@ class LibraryUpdateService(
             context: Context,
             category: Category? = null,
             target: Target = Target.CHAPTERS,
-            mangaToUse: List<LibraryManga>? = null
+            mangaToUse: List<LibraryManga>? = null,
         ): Boolean {
             return if (!isRunning()) {
                 val intent = Intent(context, LibraryUpdateService::class.java).apply {
@@ -637,7 +635,7 @@ class LibraryUpdateService(
                         putExtra(KEY_CATEGORY, id)
                         if (mangaToUse != null) putExtra(
                             KEY_MANGAS,
-                            mangaToUse.mapNotNull { it.id }.toLongArray()
+                            mangaToUse.mapNotNull { it.id }.toLongArray(),
                         )
                     }
                 }
