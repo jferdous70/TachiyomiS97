@@ -235,7 +235,7 @@ class Downloader(
                         { download ->
                             downloadChapter(download).subscribeOn(Schedulers.io())
                         },
-                        4
+                        4,
                     )
                 },
                 5,
