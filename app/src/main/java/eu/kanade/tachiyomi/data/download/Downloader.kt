@@ -28,6 +28,8 @@ import eu.kanade.tachiyomi.util.lang.plusAssign
 import eu.kanade.tachiyomi.util.storage.DiskUtil
 import eu.kanade.tachiyomi.util.storage.saveTo
 import eu.kanade.tachiyomi.util.system.ImageUtil
+import eu.kanade.tachiyomi.util.system.ImageUtil.isAnimatedAndSupported
+import eu.kanade.tachiyomi.util.system.ImageUtil.isTallImage
 import eu.kanade.tachiyomi.util.system.launchIO
 import eu.kanade.tachiyomi.util.system.launchNow
 import kotlinx.coroutines.async
@@ -68,6 +70,7 @@ class Downloader(
 ) {
     private val preferences: PreferencesHelper by injectLazy()
     private val chapterCache: ChapterCache by injectLazy()
+
     private fun clearWebviewData() {
         context.applicationInfo?.dataDir?.let { File("$it/app_webview/").deleteRecursively() }
     }
@@ -377,8 +380,8 @@ class Downloader(
             // Do when page is downloaded.
             .doOnNext { page ->
                 notifier.onProgressChange(download)
-                if (preferences.splitLongImages().get()) {
-                    splitLongImage(page, tmpDir)
+                if (preferences.splitTallImages().get()) {
+                    splitTallImage(page, download, tmpDir)
                 }
             }
             .toList()
@@ -590,54 +593,45 @@ class Downloader(
                 tmpDir.renameTo(dirname)
             }
             cache.addChapter(dirname, download.manga)
+
             DiskUtil.createNoMediaFile(tmpDir, context)
         }
     }
 
     /**
-     * Splits Long images to improve performance of reader
+     * Splits tall images to improve performance of reader
      */
-    private fun splitLongImage(page: Page, tmpDir: UniFile) {
+    private fun splitTallImage(page: Page, download: Download, tmpDir: UniFile) {
         val filename = String.format("%03d", page.number)
         val imageFile = tmpDir.listFiles()!!.find { it.name!!.startsWith("$filename.") } ?: return
-        // Implementation of Auto Split long images upon download.
-        // Checking the image dimensions without loading it in the memory.
-        val options = BitmapFactory.Options()
-        options.inJustDecodeBounds = true
-        BitmapFactory.decodeFile(imageFile.filePath, options)
-        val width = options.outWidth
-        val height = options.outHeight
-        val ratio = height / width
 
-        // Check ratio and if this is a tall image then split
-        if (ratio > 3) {
-            // I noticed 1000px runs smoother than screen height below, will keep it  until someone can discover a more optimal number
-            val splitsCount: Int = height / context.resources.displayMetrics.heightPixels + 1
-            val splitHeight = height / splitsCount
-
+        if (!isAnimatedAndSupported(imageFile.openInputStream()) && isTallImage(imageFile.openInputStream())) {
             // Getting the scaled bitmap of the source image
             val bitmap = BitmapFactory.decodeFile(imageFile.filePath)
             val scaledBitmap: Bitmap =
                 Bitmap.createScaledBitmap(bitmap, bitmap.width, bitmap.height, true)
 
-            // xCord and yCord are the pixel positions of the image splits
-            var yCord = 0
-            val xCord = 0
+            val splitsCount: Int = bitmap.height / context.resources.displayMetrics.heightPixels + 1
+            val splitHeight = bitmap.height / splitsCount
+
+            // xCoord and yCoord are the pixel positions of the image splits
+            val xCoord = 0
+            var yCoord = 0
             try {
                 for (i in 0 until splitsCount) {
                     val splitPath = imageFile.filePath!!.substringBeforeLast(".") + "__${"%03d".format(i + 1)}.jpg"
                     // Compress the bitmap and save in jpg format
                     val stream: OutputStream = FileOutputStream(splitPath)
-                    Bitmap.createBitmap(
-                        scaledBitmap,
-                        xCord,
-                        yCord,
-                        width,
-                        splitHeight,
-                    ).compress(Bitmap.CompressFormat.JPEG, 100, stream)
-                    stream.flush()
-                    stream.close()
-                    yCord += splitHeight
+                    stream.use {
+                        Bitmap.createBitmap(
+                            scaledBitmap,
+                            xCoord,
+                            yCoord,
+                            bitmap.width,
+                            splitHeight,
+                        ).compress(Bitmap.CompressFormat.JPEG, 100, stream)
+                    }
+                    yCoord += splitHeight
                 }
                 imageFile.delete()
             } catch (e: Exception) {
