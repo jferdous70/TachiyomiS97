@@ -210,7 +210,7 @@ open class GlobalSearchPresenter(
                         )
                     }
             },
-            5,
+            30,
         )
             .observeOn(AndroidSchedulers.mainThread())
             // Update matching source with the obtained results
