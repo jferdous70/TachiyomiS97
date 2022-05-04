@@ -52,9 +52,9 @@ class SettingsDownloadController : SettingsController() {
             titleRes = R.string.save_chapters_as_cbz
         }
         switchPreference {
-            bindTo(preferences.splitLongImages())
-            titleRes = R.string.split_long_images
-            summaryRes = R.string.split_long_images_summary
+            bindTo(preferences.splitTallImages())
+            titleRes = R.string.split_tall_images
+            summaryRes = R.string.split_tall_images_summary
         }
 
         preferenceCategory {
