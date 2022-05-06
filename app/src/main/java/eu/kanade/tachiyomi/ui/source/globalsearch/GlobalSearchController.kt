@@ -74,12 +74,7 @@ open class GlobalSearchController(
 
     override fun createBinding(inflater: LayoutInflater) = SourceGlobalSearchControllerBinding.inflate(inflater)
 
-    /**
-     * Set the title of controller.
-     *
-     * @return title.
-     */
-    override fun getTitle(): String? {
+    override fun getSearchTitle(): String? {
         return customTitle ?: presenter.query
     }
 
@@ -196,7 +191,7 @@ open class GlobalSearchController(
     }
 
     override fun onActionViewCollapse(item: MenuItem?) {
-        if (activity is SearchActivity && extensionFilter != null) {
+        if (activity is SearchActivity) {
             (activity as? SearchActivity)?.backPress()
         } else if (customTitle == null) {
             router.popCurrentController()

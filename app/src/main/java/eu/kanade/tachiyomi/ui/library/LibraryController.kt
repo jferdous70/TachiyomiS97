@@ -85,6 +85,7 @@ import eu.kanade.tachiyomi.ui.manga.MangaDetailsController
 import eu.kanade.tachiyomi.ui.migration.manga.design.PreMigrationController
 import eu.kanade.tachiyomi.ui.reader.ReaderActivity
 import eu.kanade.tachiyomi.ui.source.globalsearch.GlobalSearchController
+import eu.kanade.tachiyomi.util.isLocal
 import eu.kanade.tachiyomi.util.moveCategories
 import eu.kanade.tachiyomi.util.system.dpToPx
 import eu.kanade.tachiyomi.util.system.getResourceColor
@@ -970,21 +971,6 @@ class LibraryController(
             binding.recyclerCover.isFocusable = false
             singleCategory = presenter.categories.size <= 1
 
-            if (preferences.showLibrarySearchSuggestions().get()) {
-                activityBinding?.searchToolbar?.setOnLongClickListener {
-                    val suggestion = preferences.librarySearchSuggestion().get()
-                    if (suggestion.isNotBlank()) {
-                        val searchItem = activityBinding?.searchToolbar?.searchItem
-                        val searchView = activityBinding?.searchToolbar?.searchView
-                            ?: return@setOnLongClickListener false
-                        searchItem?.expandActionView()
-                        searchView.setQuery(suggestion.removeSuffix("…"), false)
-                        true
-                    } else {
-                        false
-                    }
-                }
-            }
             if (binding.libraryGridRecycler.recycler.manager is StaggeredGridLayoutManager && staggeredBundle != null) {
                 binding.libraryGridRecycler.recycler.manager.onRestoreInstanceState(staggeredBundle)
                 staggeredBundle = null
@@ -1762,6 +1748,14 @@ class LibraryController(
         }
     }
 
+    override fun onSearchActionViewLongClickQuery(): String? {
+        if (preferences.showLibrarySearchSuggestions().get()) {
+            val suggestion = preferences.librarySearchSuggestion().get().takeIf { it.isNotBlank() }
+            return suggestion?.removeSuffix("…")
+        }
+        return null
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.action_search -> expandActionViewFromInteraction = true
@@ -1868,7 +1862,7 @@ class LibraryController(
                 PreMigrationController.navigateToMigration(
                     skipPre,
                     router,
-                    selectedMangas.filter { it.id != LocalSource.ID }.mapNotNull { it.id },
+                    selectedMangas.filter { it.isLocal() }.mapNotNull { it.id },
                 )
                 destroyActionModeIfNeeded()
             }
