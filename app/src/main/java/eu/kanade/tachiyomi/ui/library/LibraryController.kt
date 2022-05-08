@@ -1735,10 +1735,6 @@ class LibraryController(
             !singleCategory && presenter.showAllCategories
         ) {
             showCategories(true)
-            binding.libraryGridRecycler.recycler.post {
-                activityBinding?.appBar?.y = (activityBinding?.appBar?.yNeededForSmallToolbar ?: 0).toFloat()
-                activityBinding?.appBar?.updateAppBarAfterY(binding.libraryGridRecycler.recycler)
-            }
         }
     }
 
@@ -1862,7 +1858,7 @@ class LibraryController(
                 PreMigrationController.navigateToMigration(
                     skipPre,
                     router,
-                    selectedMangas.filter { it.isLocal() }.mapNotNull { it.id },
+                    selectedMangas.filter { !it.isLocal() }.mapNotNull { it.id },
                 )
                 destroyActionModeIfNeeded()
             }
