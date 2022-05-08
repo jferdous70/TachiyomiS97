@@ -378,12 +378,7 @@ class Downloader(
             // Concurrently do 5 pages at a time
             .flatMap({ page -> getOrDownloadImage(page, download, tmpDir) }, 5)
             // Do when page is downloaded.
-            .doOnNext { page ->
-                notifier.onProgressChange(download)
-                if (preferences.splitTallImages().get()) {
-                    splitTallImage(page, download, tmpDir)
-                }
-            }
+            .doOnNext { notifier.onProgressChange(download) }
             .toList()
             .map { download }
             // Do after download completes
@@ -434,12 +429,17 @@ class Downloader(
         }
 
         return pageObservable
-            // When the image is ready, set image path, progress (just in case) and status
+            // When the page is ready, set page path, progress (just in case) and status
             .doOnNext { file ->
                 page.uri = file.uri
                 page.progress = 100
                 download.downloadedImages++
                 page.status = Page.READY
+
+                // split images after page is ready
+                if (preferences.splitTallImages().get()) {
+                    splitTallImage(page, tmpDir)
+                }
             }
             .map { page }
             // Mark this page as error and allow to download the remaining
@@ -547,13 +547,7 @@ class Downloader(
         val downloadedImages = tmpDir.listFiles().orEmpty().filterNot { it.name!!.endsWith(".tmp") || (it.name!!.contains("__") && !it.name!!.contains("__001.jpg")) }
 
         download.status = if (downloadedImages.size == download.pages!!.size) {
-            Download.State.DOWNLOADED
-        } else {
-            Download.State.ERROR
-        }
-
-        // Only rename the directory if it's downloaded.
-        if (download.status == Download.State.DOWNLOADED) {
+            // Only rename the directory if it's downloaded.
             if (preferences.saveChaptersAsCBZ().get()) {
                 val zip = mangaDir.createFile("$dirname.cbz.tmp")
                 val zipOut = ZipOutputStream(BufferedOutputStream(zip.openOutputStream()))
@@ -582,53 +576,74 @@ class Downloader(
             cache.addChapter(dirname, download.manga)
 
             DiskUtil.createNoMediaFile(tmpDir, context)
+
+            Download.State.DOWNLOADED
+        } else {
+            Download.State.ERROR
         }
     }
 
     /**
      * Splits tall images to improve performance of reader
      */
-    private fun splitTallImage(page: Page, download: Download, tmpDir: UniFile) {
+    private fun splitTallImage(page: Page, tmpDir: UniFile) {
         val filename = String.format("%03d", page.number)
-        val imageFile = tmpDir.listFiles()!!.find { it.name!!.startsWith("$filename.") } ?: return
+        val imageFile = tmpDir.listFiles()?.find { it.name!!.startsWith("$filename.") }
 
-        if (!isAnimatedAndSupported(imageFile.openInputStream()) && isTallImage(imageFile.openInputStream())) {
-            // Getting the scaled bitmap of the source image
-            val bitmap = BitmapFactory.decodeFile(imageFile.filePath)
-            val scaledBitmap: Bitmap =
-                Bitmap.createScaledBitmap(bitmap, bitmap.width, bitmap.height, true)
-
-            val splitsCount: Int = bitmap.height / context.resources.displayMetrics.heightPixels + 1
-            val splitHeight = bitmap.height / splitsCount
-
-            // xCoord and yCoord are the pixel positions of the image splits
-            val xCoord = 0
-            var yCoord = 0
-            try {
-                for (i in 0 until splitsCount) {
-                    val splitPath = imageFile.filePath!!.substringBeforeLast(".") + "__${"%03d".format(i + 1)}.jpg"
-                    // Compress the bitmap and save in jpg format
-                    val stream: OutputStream = FileOutputStream(splitPath)
-                    stream.use {
-                        Bitmap.createBitmap(
-                            scaledBitmap,
-                            xCoord,
-                            yCoord,
-                            bitmap.width,
-                            splitHeight,
-                        ).compress(Bitmap.CompressFormat.JPEG, 100, stream)
-                    }
-                    yCoord += splitHeight
-                }
-                imageFile.delete()
-            } catch (e: Exception) {
-                // Image splits were not successfully saved so delete them and keep the original image
-                for (i in 0 until splitsCount) {
-                    val splitPath = imageFile.filePath!!.substringBeforeLast(".") + "__${"%03d".format(i + 1)}.jpg"
-                    File(splitPath).delete()
-                }
-                throw e
+        // check if the original page was already processed before then skip and continue to next page otherwise throw error.
+        if (imageFile == null) {
+            if (tmpDir.listFiles()?.find { it.name!!.startsWith("{$filename}__") } != null) {
+                return
             }
+            throw Error(
+                context.getString(
+                    R.string.download_notifier_split_page_not_found,
+                    page.number,
+                ),
+            )
+        }
+
+        if (isAnimatedAndSupported(imageFile.openInputStream()) || !isTallImage(imageFile.openInputStream())) {
+            return
+        }
+
+        // Getting the scaled bitmap of the source image
+        val bitmap = BitmapFactory.decodeFile(imageFile.filePath)
+        val scaledBitmap: Bitmap =
+            Bitmap.createScaledBitmap(bitmap, bitmap.width, bitmap.height, true)
+
+        val splitsCount: Int = bitmap.height / context.resources.displayMetrics.heightPixels + 1
+        val splitHeight = bitmap.height / splitsCount
+
+        // xCoord and yCoord are the pixel positions of the image splits
+        val xCoord = 0
+        var yCoord = 0
+        try {
+            for (i in 0 until splitsCount) {
+                val splitPath =
+                    imageFile.filePath!!.substringBeforeLast(".") + "__${"%03d".format(i + 1)}.jpg"
+                // Compress the bitmap and save in jpg format
+                val stream: OutputStream = FileOutputStream(splitPath)
+                stream.use {
+                    Bitmap.createBitmap(
+                        scaledBitmap,
+                        xCoord,
+                        yCoord,
+                        bitmap.width,
+                        splitHeight,
+                    ).compress(Bitmap.CompressFormat.JPEG, 100, stream)
+                }
+                yCoord += splitHeight
+            }
+            imageFile.delete()
+        } catch (e: Exception) {
+            // Image splits were not successfully saved so delete them and keep the original image
+            for (i in 0 until splitsCount) {
+                val splitPath =
+                    imageFile.filePath!!.substringBeforeLast(".") + "__${"%03d".format(i + 1)}.jpg"
+                File(splitPath).delete()
+            }
+            throw e
         }
     }
 
