@@ -71,10 +71,6 @@ class Downloader(
     private val preferences: PreferencesHelper by injectLazy()
     private val chapterCache: ChapterCache by injectLazy()
 
-    private fun clearWebviewData() {
-        context.applicationInfo?.dataDir?.let { File("$it/app_webview/").deleteRecursively() }
-    }
-
     /**
      * Store for persisting downloads across restarts.
      */
@@ -386,9 +382,6 @@ class Downloader(
             // If the page list threw, it will resume here
             .onErrorReturn { error ->
                 download.status = Download.State.ERROR
-                if (error.message!!.contains("Failed to bypass Cloudflare")) {
-                    clearWebviewData()
-                }
                 notifier.onError(error.message, download.chapter.name)
                 download
             }
@@ -431,15 +424,16 @@ class Downloader(
         return pageObservable
             // When the page is ready, set page path, progress (just in case) and status
             .doOnNext { file ->
+                // auto split tall images
+                if (preferences.splitTallImages().get()) {
+                    splitTallImage(page, tmpDir)
+                }
+
                 page.uri = file.uri
                 page.progress = 100
                 download.downloadedImages++
                 page.status = Page.READY
 
-                // split images after page is ready
-                if (preferences.splitTallImages().get()) {
-                    splitTallImage(page, tmpDir)
-                }
             }
             .map { page }
             // Mark this page as error and allow to download the remaining
@@ -588,24 +582,12 @@ class Downloader(
      */
     private fun splitTallImage(page: Page, tmpDir: UniFile) {
         val filename = String.format("%03d", page.number)
-        val imageFile = tmpDir.listFiles()?.find { it.name!!.startsWith("$filename.") }
+        val imageFile = tmpDir.listFiles()?.find { it.name!!.startsWith(filename) }
+            ?: throw Error(context.getString(R.string.download_notifier_split_page_not_found, page.number))
+        // check if the original page was previously splitted before then skip.
+        if (imageFile.name!!.contains("__")) return
 
-        // check if the original page was already processed before then skip and continue to next page otherwise throw error.
-        if (imageFile == null) {
-            if (tmpDir.listFiles()?.find { it.name!!.startsWith("{$filename}__") } != null) {
-                return
-            }
-            throw Error(
-                context.getString(
-                    R.string.download_notifier_split_page_not_found,
-                    page.number,
-                ),
-            )
-        }
-
-        if (isAnimatedAndSupported(imageFile.openInputStream()) || !isTallImage(imageFile.openInputStream())) {
-            return
-        }
+        if (isAnimatedAndSupported(imageFile.openInputStream()) || !isTallImage(imageFile.openInputStream())) return
 
         // Getting the scaled bitmap of the source image
         val bitmap = BitmapFactory.decodeFile(imageFile.filePath)
