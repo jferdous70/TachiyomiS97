@@ -120,6 +120,7 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+    namespace = "eu.kanade.tachiyomi"
 }
 
 dependencies {
