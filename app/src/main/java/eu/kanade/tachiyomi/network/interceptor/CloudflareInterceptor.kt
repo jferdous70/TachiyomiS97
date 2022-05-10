@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.network.interceptor
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
+import android.os.Handler
 import android.os.Looper
 import android.webkit.WebSettings
 import android.webkit.WebView
@@ -84,9 +85,10 @@ class CloudflareInterceptor(private val context: Context) : Interceptor {
                 } catch (e: CloudflareBypassException) {
                     // clearwebviewdata
                     context.applicationInfo?.dataDir?.let { File("$it/app_webview/").deleteRecursively() }
-                    Looper.prepare()
-                    context.toast("Trying to force bypass cloudflare. Attempt: {$i}")
-                    Looper.loop()
+                    val msg = "Trying to force bypass cloudflare. Attempt: $i"
+                    Handler(Looper.getMainLooper()).post {
+                        Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+                    }
                     if (i == 10) {
                         throw e
                     }
