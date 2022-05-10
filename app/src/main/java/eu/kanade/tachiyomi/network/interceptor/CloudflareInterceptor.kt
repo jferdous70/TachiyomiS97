@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.network.interceptor
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
+import android.os.Looper
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.widget.Toast
@@ -22,6 +23,7 @@ import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
 import uy.kohesive.injekt.injectLazy
+import java.io.File
 import java.io.IOException
 import java.util.Locale
 import java.util.concurrent.CountDownLatch
@@ -74,7 +76,22 @@ class CloudflareInterceptor(private val context: Context) : Interceptor {
             networkHelper.cookieManager.remove(originalRequest.url, COOKIE_NAMES, 0)
             val oldCookie = networkHelper.cookieManager.get(originalRequest.url)
                 .firstOrNull { it.name == "cf_clearance" }
-            resolveWithWebView(originalRequest, oldCookie)
+
+            for (i in 1..10) {
+                try {
+                    resolveWithWebView(originalRequest, oldCookie)
+                    break
+                } catch (e: CloudflareBypassException) {
+                    // clearwebviewdata
+                    context.applicationInfo?.dataDir?.let { File("$it/app_webview/").deleteRecursively() }
+                    Looper.prepare()
+                    context.toast("Trying to force bypass cloudflare. Attempt: {$i}")
+                    Looper.loop()
+                    if (i == 10) {
+                        throw e
+                    }
+                }
+            }
 
             return chain.proceed(originalRequest)
         }
