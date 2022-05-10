@@ -433,7 +433,6 @@ class Downloader(
                 page.progress = 100
                 download.downloadedImages++
                 page.status = Page.READY
-
             }
             .map { page }
             // Mark this page as error and allow to download the remaining
