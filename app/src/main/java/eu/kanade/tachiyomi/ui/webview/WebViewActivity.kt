@@ -39,6 +39,7 @@ open class WebViewActivity : BaseWebViewActivity() {
         }
     }
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         title = intent.extras?.getString(TITLE_KEY)
