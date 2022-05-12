@@ -512,6 +512,7 @@ class ReaderPresenter(
         selectedChapter.chapter.last_page_read = page.index
         selectedChapter.chapter.pages_left =
             (selectedChapter.pages?.size ?: page.index) - page.index
+        downloadChaptersAheadDuringReading()
         val shouldTrack = !preferences.incognitoMode().get() || hasTrackers
         if (shouldTrack &&
             // For double pages, check if the second to last page is doubled up
@@ -532,6 +533,20 @@ class ReaderPresenter(
             Timber.d("Setting ${selectedChapter.chapter.url} as active")
             onChapterChanged(currentChapters.currChapter)
             loadNewChapter(selectedChapter)
+        }
+    }
+
+    private fun downloadChaptersAheadDuringReading() {
+        val currentChapters = viewerChaptersRelay.value
+        if (currentChapters != null) {
+            val isChapterDownloaded = currentChapters.currChapter.pageLoader is DownloadPageLoader
+            // currentChapters.unref()
+            val currentChapter = currentChapters.currChapter
+            val currentChapterPageCount = currentChapter.chapter.last_page_read + currentChapter.chapter.pages_left
+            if ((currentChapter.chapter.last_page_read + 1.0) / currentChapterPageCount > 0.33 || isAnyPrevChapterDownloaded) {
+                downloadNextChapters(isChapterDownloaded)
+            }
+            isAnyPrevChapterDownloaded = false
         }
     }
 
