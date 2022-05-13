@@ -470,6 +470,7 @@
     <string name="webtoon_side_padding_15">15%</string>
     <string name="webtoon_side_padding_20">20%</string>
     <string name="webtoon_side_padding_25">25%</string>
+    <string name="webtoon_side_padding_35">35%</string>
     <string name="l_nav">L shaped</string>
     <string name="kindlish_nav">Kindle-ish</string>
     <string name="edge_nav">Edge</string>
