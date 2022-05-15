@@ -134,7 +134,7 @@ dependencies {
     implementation("tachiyomi.sourceapi:source-api:1.1")
 
     // Android X libraries
-    implementation("androidx.appcompat:appcompat:1.4.1")
+    implementation("androidx.appcompat:appcompat:1.6.0-alpha03")
     implementation("androidx.cardview:cardview:1.0.0")
     implementation("com.google.android.material:material:1.6.0")
     implementation("androidx.webkit:webkit:1.4.0")
@@ -145,6 +145,7 @@ dependencies {
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.palette:palette:1.0.0")
     implementation("androidx.core:core-ktx:1.7.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.0-rc01")
 
     implementation("androidx.constraintlayout:constraintlayout:2.1.3")
 

@@ -1153,6 +1153,7 @@ class LibraryController(
         binding.recyclerCover.isClickable = show
         binding.recyclerCover.isFocusable = show
         (activity as? MainActivity)?.apply {
+            reEnableBackPressedCallBack()
             if (show && !binding.appBar.compactSearchMode && binding.appBar.useLargeToolbar) {
                 binding.appBar.compactSearchMode = binding.appBar.useLargeToolbar && show
                 if (binding.appBar.compactSearchMode) {
@@ -1689,7 +1690,14 @@ class LibraryController(
         }
     }
 
-    override fun handleSheetBack(): Boolean {
+    override fun canStillGoBack(): Boolean {
+        return isBindingInitialized && (
+            binding.recyclerCover.isClickable ||
+                binding.filterBottomSheet.filterBottomSheet.sheetBehavior.isExpanded()
+            )
+    }
+
+    override fun handleBack(): Boolean {
         if (binding.recyclerCover.isClickable) {
             showCategories(false)
             return true
@@ -1758,7 +1766,9 @@ class LibraryController(
             R.id.action_search -> expandActionViewFromInteraction = true
             R.id.action_filter -> {
                 hasExpanded = true
-                binding.filterBottomSheet.filterBottomSheet.sheetBehavior?.expand()
+                val sheetBehavior = binding.filterBottomSheet.filterBottomSheet.sheetBehavior
+                if (!sheetBehavior.isExpanded()) sheetBehavior?.expand()
+                else showDisplayOptions()
             }
             else -> return super.onOptionsItemSelected(item)
         }
