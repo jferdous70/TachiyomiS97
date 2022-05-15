@@ -39,7 +39,7 @@ interface Chapter : SChapter, Serializable {
         }
     }
 
-    fun copyFrom(other: Chapter, overwrite: Boolean = true) {
+    fun copyFrom(other: Chapter) {
         id = other.id
         manga_id = other.manga_id
         read = other.read
