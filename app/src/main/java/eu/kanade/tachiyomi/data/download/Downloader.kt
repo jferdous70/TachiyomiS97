@@ -234,7 +234,7 @@ class Downloader(
                         4,
                     )
                 },
-                5,
+                500,
             )
             .onBackpressureLatest()
             .observeOn(AndroidSchedulers.mainThread())
