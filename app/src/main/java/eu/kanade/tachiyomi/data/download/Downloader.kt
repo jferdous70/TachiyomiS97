@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.data.download
 
 import android.content.Context
 import android.content.Intent
+import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Build
@@ -47,6 +48,7 @@ import java.io.OutputStream
 import java.util.zip.CRC32
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+import kotlin.math.max
 
 /**
  * This class is the one in charge of downloading chapters.
@@ -592,8 +594,8 @@ class Downloader(
         val bitmap = BitmapFactory.decodeFile(imageFile.filePath)
         val scaledBitmap: Bitmap =
             Bitmap.createScaledBitmap(bitmap, bitmap.width, bitmap.height, true)
-
-        val splitsCount: Int = bitmap.height / context.resources.displayMetrics.heightPixels + 1
+        val screenHeight = max(Resources.getSystem().displayMetrics.heightPixels, Resources.getSystem().displayMetrics.widthPixels)
+        val splitsCount: Int = bitmap.height / screenHeight + 1
         val splitHeight = bitmap.height / splitsCount
 
         // xCoord and yCoord are the pixel positions of the image splits
