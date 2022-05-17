@@ -323,8 +323,9 @@ class SettingsReaderController : SettingsController() {
                     R.string.webtoon_side_padding_15,
                     R.string.webtoon_side_padding_20,
                     R.string.webtoon_side_padding_25,
+                    R.string.webtoon_side_padding_30,
                 )
-                entryValues = listOf(0, 10, 15, 20, 25)
+                entryValues = listOf(0, 10, 15, 20, 25, 30)
                 defaultValue = "0"
             }
 

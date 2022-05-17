@@ -131,7 +131,7 @@
 
                 <data
                     android:host="myanimelist-auth"
-                    android:scheme="tachiyomij2k" />
+                    android:scheme="tachiyomis97" />
             </intent-filter>
         </activity>
         <activity
