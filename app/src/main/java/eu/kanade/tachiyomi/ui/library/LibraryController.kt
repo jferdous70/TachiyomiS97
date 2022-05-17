@@ -104,6 +104,7 @@ import eu.kanade.tachiyomi.util.view.hide
 import eu.kanade.tachiyomi.util.view.isControllerVisible
 import eu.kanade.tachiyomi.util.view.isExpanded
 import eu.kanade.tachiyomi.util.view.isHidden
+import eu.kanade.tachiyomi.util.view.isSettling
 import eu.kanade.tachiyomi.util.view.scrollViewWith
 import eu.kanade.tachiyomi.util.view.setOnQueryTextChangeListener
 import eu.kanade.tachiyomi.util.view.setStyle
@@ -459,6 +460,7 @@ class LibraryController(
 
     private fun showFilterTip() {
         if (preferences.shownFilterTutorial().get() || !hasExpanded) return
+        if (filterTooltip != null) return
         val activityBinding = activityBinding ?: return
         val activity = activity ?: return
         val icon = (activityBinding.bottomNav ?: activityBinding.sideNav)?.getItemView(R.id.nav_library) ?: return
@@ -1278,7 +1280,7 @@ class LibraryController(
             adapter.removeAllScrollableHeaders()
         }
         adapter.setFilter(query)
-        if (adapter.itemCount == 0) return true
+        if (presenter.allLibraryItems.isEmpty()) return true
         viewScope.launchUI {
             adapter.performFilterAsync()
         }
@@ -1767,7 +1769,7 @@ class LibraryController(
             R.id.action_filter -> {
                 hasExpanded = true
                 val sheetBehavior = binding.filterBottomSheet.filterBottomSheet.sheetBehavior
-                if (!sheetBehavior.isExpanded()) sheetBehavior?.expand()
+                if (!sheetBehavior.isExpanded() && !sheetBehavior.isSettling()) sheetBehavior?.expand()
                 else showDisplayOptions()
             }
             else -> return super.onOptionsItemSelected(item)
