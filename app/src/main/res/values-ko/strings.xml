@@ -502,10 +502,10 @@
     <string name="in_progress">진행 중</string>
     <string name="new_chapters">새 장</string>
     <string name="all_files_permission_required">파일 사용 권한 필요</string>
-    <string name="external_storage_permission_notice">TachiyomiJ2K는 Android 11의 모든 파일에 액세스하여 장을 다운로드하고, 자동 백업을 만들고, 로컬 만가를 읽어야 합니다.
+    <string name="external_storage_permission_notice">TachiyomiS97 Android 11의 모든 파일에 액세스하여 장을 다운로드하고, 자동 백업을 만들고, 로컬 만가를 읽어야 합니다.
 \n
 \n다음 화면에서 \"Allow access to manage all files.\"</string>
-    <string name="external_storage_download_notice">TachiyomiJ2K는 장을 다운로드하려면 모든 파일에 액세스해야 합니다. 여기를 탭한 다음 \"모든 파일을 관리할 수 있는 액세스 허용\"을 설정합니다.</string>
+    <string name="external_storage_download_notice">TachiyomiS97 장을 다운로드하려면 모든 파일에 액세스해야 합니다. 여기를 탭한 다음 \"모든 파일을 관리할 수 있는 액세스 허용\"을 설정합니다.</string>
     <string name="manhwa">만화</string>
     <string name="manhua">만화</string>
     <string name="unlock">잠금 해제</string>

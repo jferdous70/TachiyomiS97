@@ -475,7 +475,7 @@
     <string name="clear_history_completed">سابقه پاک شد</string>
     <string name="clear_history_confirmation">آیا مطمئن هستید؟ تمام سابقه از دست خواهد رفت.</string>
     <string name="all_files_permission_required">اجازه دسترسی به فایل</string>
-    <string name="external_storage_permission_notice">تاچیومی J2K نیازمند دسترسی به همه فایل ها در اندوید 11 برای دانلود قسمت ها، ایجاد پشتیبان گیری خودکار، و خواندن مانگاهای محلی( مانگا های موجود در دستگاه شما) است.
+    <string name="external_storage_permission_notice">تاچیومی TachiyomiS97 نیازمند دسترسی به همه فایل ها در اندوید 11 برای دانلود قسمت ها، ایجاد پشتیبان گیری خودکار، و خواندن مانگاهای محلی( مانگا های موجود در دستگاه شما) است.
 \n
 \nدر صفحه بعدی، اجازه \"مجاز بودن دسترسی به مدیریت همه پرونده‌ها\" را بدهید.</string>
     <string name="pref_manage_notifications">مدیریت اعلان‌ها</string>

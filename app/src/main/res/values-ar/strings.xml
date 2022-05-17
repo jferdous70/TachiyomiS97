@@ -915,10 +915,8 @@
     <string name="by_chapter_number">حسب رقم الفصل</string>
     <string name="by_source_order">حسب ترتيب المصدر</string>
     <string name="not_bookmarked">لم يتم وضع علامة مرجعية</string>
-    <string name="external_storage_download_notice">يتطلب TachiyomiJ2K الوصول إلى جميع الملفات لتنزيل الفصول. انقر هنا ، ثم مكّن \"السماح بالوصول لإدارة جميع الملفات.\"</string>
-    <string name="external_storage_permission_notice">يتطلب TachiyomiJ2K الوصول إلى جميع الملفات في Android 11 لتنزيل الفصول وإنشاء نسخ احتياطية تلقائية وقراءة المانجا المحلية.
-\n
-\nفي الشاشة التالية ، قم بتمكين \"السماح بالوصول لإدارة جميع الملفات.\"</string>
+    <string name="external_storage_download_notice">يتطلب TachiyomiS97 الوصول إلى جميع الملفات لتنزيل الفصول. انقر هنا ، ثم مكّن \"السماح بالوصول لإدارة جميع الملفات.\"</string>
+    <string name="external_storage_permission_notice">يتطلب TachiyomiS97 الوصول إلى جميع الملفات في Android 11 لتنزيل الفصول وإنشاء نسخ احتياطية تلقائية وقراءة المانجا المحلية.    في الشاشة التالية ، قم بتمكين \"السماح بالوصول لإدارة جميع الملفات.\"</string>
     <string name="all_files_permission_required">إذن الوصول إلى الملفات مطلوب</string>
     <string name="warning">تحذير</string>
     <string name="search_">بحث %1$s</string>

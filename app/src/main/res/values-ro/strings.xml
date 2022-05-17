@@ -721,9 +721,9 @@
     <string name="appearance">Aspect</string>
     <string name="tracking_info">Sincronizare unidirecțională pentru a actualiza progresul capitolului în serviciile de urmărire. Configurați urmărirea pentru intrările individuale de manga din butonul lor de urmărire.</string>
     <string name="no_chapters_to_delete">Niciun capitol de șters</string>
-    <string name="external_storage_download_notice">TachiyomiJ2K necesită accesul la fișiere pentru a descărca capitole. Apasă aici, după \"Permite accesul la toate fișierele.\"</string>
+    <string name="external_storage_download_notice">TachiyomiS97 necesită accesul la fișiere pentru a descărca capitole. Apasă aici, după \"Permite accesul la toate fișierele.\"</string>
     <string name="all_files_permission_required">Permisiune accesare fișiere</string>
-    <string name="external_storage_permission_notice">TachiyomiJ2K necesită accesul la fișiere pentru a descărca capitole, a crea copii de rezervă și accesa manga descărcată local.
+    <string name="external_storage_permission_notice">TachiyomiS97 necesită accesul la fișiere pentru a descărca capitole, a crea copii de rezervă și accesa manga descărcată local.
 \n
 \nPe ecranul următor, selectați \"Permiteți accesul la toate fișierele.\"</string>
     <string name="remove_all_downloads">Înlăturați toate descărcările\?</string>

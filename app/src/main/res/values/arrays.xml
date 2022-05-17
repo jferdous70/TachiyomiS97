@@ -64,7 +64,7 @@
         <item>@string/webtoon_side_padding_15</item>
         <item>@string/webtoon_side_padding_20</item>
         <item>@string/webtoon_side_padding_25</item>
-        <item>@string/webtoon_side_padding_35</item>
+        <item>@string/webtoon_side_padding_30</item>
     </string-array>
 
     <string-array name="webtoon_side_padding_values">
@@ -73,7 +73,7 @@
         <item>15</item>
         <item>20</item>
         <item>25</item>
-        <item>35</item>
+        <item>30</item>
     </string-array>
 
     <string-array name="zoom_start">

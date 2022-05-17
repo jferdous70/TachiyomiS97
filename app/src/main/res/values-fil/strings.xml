@@ -621,8 +621,8 @@
         <item quantity="one">Para sa %d serye</item>
         <item quantity="other">Para sa %d (na) serye</item>
     </plurals>
-    <string name="external_storage_download_notice">Kailangan ng TachiyomiJ2K ng access sa lahat po ng mga file para maka-download ng mga kabanata. Pakipindot po ito, tapos pakibuksan po ang \"Payagan ang pamamahala ng lahat ng file.\"</string>
-    <string name="external_storage_permission_notice">Kailangan ng TachiyomiJ2K ng access sa lahat po ng mga file sa Android 11 para maka-download ng mga kabanata, makagawa ng mga kusang pag-backup, at makapagbasa ng mga lokal na manga.
+    <string name="external_storage_download_notice">Kailangan ng TachiyomiS97 ng access sa lahat po ng mga file para maka-download ng mga kabanata. Pakipindot po ito, tapos pakibuksan po ang \"Payagan ang pamamahala ng lahat ng file.\"</string>
+    <string name="external_storage_permission_notice">Kailangan ng TachiyomiS97 ng access sa lahat po ng mga file sa Android 11 para maka-download ng mga kabanata, makagawa ng mga kusang pag-backup, at makapagbasa ng mga lokal na manga.
 \n
 \nSa susunod na screen, pakibuksan po ang \"Payagan ang pamamahala ng lahat ng file.\"</string>
     <string name="all_files_permission_required">Kailangan ng permiso sa file</string>

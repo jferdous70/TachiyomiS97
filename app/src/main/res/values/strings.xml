@@ -4,8 +4,8 @@
     <string name="app_short_name" translatable="false">TachiS97</string>
 
     <string name="all_files_permission_required">File permissions required</string>
-    <string name="external_storage_permission_notice">TachiyomiJ2K requires access to all files in Android 11 to download chapters, create automatic backups, and read local manga. \n\nOn the next screen, enable \"Allow access to manage all files.\"</string>
-    <string name="external_storage_download_notice">TachiyomiJ2K requires access to all files to download chapters. Tap here, then enable \"Allow access to manage all files.\"</string>
+    <string name="external_storage_permission_notice">TachiyomiS97 requires access to all files in Android 11 to download chapters, create automatic backups, and read local manga.   On the next screen, enable \"Allow access to manage all files.\"</string>
+    <string name="external_storage_download_notice">TachiyomiS97 requires access to all files to download chapters. Tap here, then enable \"Allow access to manage all files.\"</string>
 
     <!--Models-->
 
@@ -470,7 +470,7 @@
     <string name="webtoon_side_padding_15">15%</string>
     <string name="webtoon_side_padding_20">20%</string>
     <string name="webtoon_side_padding_25">25%</string>
-    <string name="webtoon_side_padding_35">35%</string>
+    <string name="webtoon_side_padding_30">30%</string>
     <string name="l_nav">L shaped</string>
     <string name="kindlish_nav">Kindle-ish</string>
     <string name="edge_nav">Edge</string>
