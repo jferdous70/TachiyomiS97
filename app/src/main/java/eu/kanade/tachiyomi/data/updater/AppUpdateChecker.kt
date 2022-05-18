@@ -9,6 +9,7 @@ import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.network.parseAs
 import eu.kanade.tachiyomi.util.system.withIOContext
+import io.github.g00fy2.versioncompare.Version
 import uy.kohesive.injekt.injectLazy
 import java.util.Date
 import java.util.concurrent.TimeUnit
@@ -73,7 +74,7 @@ class AppUpdateChecker {
     private fun isNewVersion(versionTag: String): Boolean {
         // Removes prefixes like "r" or "v"
         val newVersion = versionTag.replace("[^\\d.]".toRegex(), "")
-        return newVersion != BuildConfig.VERSION_NAME
+        return Version(newVersion) > Version(BuildConfig.VERSION_NAME)
     }
 }
 
