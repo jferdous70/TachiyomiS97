@@ -242,8 +242,6 @@ class PreferencesHelper(val context: Context) {
 
     fun downloadOnlyOverWifi() = prefs.getBoolean(Keys.downloadOnlyOverWifi, true)
 
-    fun splitTallImages() = flowPrefs.getBoolean("split_tall_images", true)
-
     fun folderPerManga() = prefs.getBoolean(Keys.folderPerManga, false)
 
     fun librarySearchSuggestion() = flowPrefs.getString(Keys.librarySearchSuggestion, "")
@@ -312,6 +310,8 @@ class PreferencesHelper(val context: Context) {
     fun pinnedCatalogues() = flowPrefs.getStringSet("pinned_catalogues", mutableSetOf())
 
     fun saveChaptersAsCBZ() = flowPrefs.getBoolean("save_chapter_as_cbz", true)
+
+    fun splitTallImages() = flowPrefs.getBoolean("split_tall_images", true)
 
     fun downloadNewChapters() = flowPrefs.getBoolean(Keys.downloadNew, false)
 
