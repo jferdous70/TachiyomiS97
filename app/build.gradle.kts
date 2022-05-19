@@ -128,8 +128,7 @@ dependencies {
     implementation("com.github.jays2kings:subsampling-scale-image-view:756849e") {
         exclude(module = "image-decoder")
     }
-	implementation("io.github.g00fy2:versioncompare:1.5.0")
-	implementation("com.github.tachiyomiorg:image-decoder:7481a4a")
+    implementation("com.github.tachiyomiorg:image-decoder:7481a4a")
 
     // Source models and interfaces from Tachiyomi 1.x
     implementation("tachiyomi.sourceapi:source-api:1.1")
