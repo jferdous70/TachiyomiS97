@@ -41,6 +41,11 @@ class SettingsTrackingController :
             titleRes = R.string.update_tracking_marked_read
             defaultValue = false
         }
+        switchPreference {
+            key = Keys.twowaySyncTracking
+            titleRes = R.string.two_way_sync_tracking
+            defaultValue = false
+        }
         preferenceCategory {
             titleRes = R.string.services
 

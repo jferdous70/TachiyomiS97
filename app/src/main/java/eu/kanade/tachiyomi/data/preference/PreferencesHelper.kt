@@ -198,6 +198,8 @@ class PreferencesHelper(val context: Context) {
 
     fun trackMarkedAsRead() = prefs.getBoolean(Keys.trackMarkedAsRead, false)
 
+    fun twowaySyncTracking() = prefs.getBoolean(Keys.twowaySyncTracking, false)
+
     fun trackingsToAddOnline() = flowPrefs.getStringSet(Keys.trackingsToAddOnline, emptySet())
 
     fun lastUsedCatalogueSource() = flowPrefs.getLong(Keys.lastUsedCatalogueSource, -1)
