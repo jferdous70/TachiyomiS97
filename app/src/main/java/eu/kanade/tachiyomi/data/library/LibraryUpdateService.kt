@@ -354,6 +354,9 @@ class LibraryUpdateService(
 
     private suspend fun finishUpdates() {
         if (jobCount.get() != 0) return
+        if (preferences.twowaySyncTracking() && job?.isCancelled == false) {
+            updateTrackings(mangaToUpdate)
+        }
         if (newUpdates.isNotEmpty()) {
             notifier.showResultNotification(newUpdates)
 
@@ -542,6 +545,10 @@ class LibraryUpdateService(
                     try {
                         val newTrack = service.refresh(track)
                         db.insertTrack(newTrack).executeAsBlocking()
+                        if (preferences.twowaySyncTracking()) {
+                            syncChaptersWithTrackServiceTwoWay(db, db.getChapters(manga).executeAsBlocking(), track, service)
+                            listener?.onUpdateManga(manga)
+                        }
 
                         if (service is EnhancedTrackService) {
                             syncChaptersWithTrackServiceTwoWay(db, db.getChapters(manga).executeAsBlocking(), track, service)
