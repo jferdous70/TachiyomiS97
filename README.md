@@ -6,7 +6,7 @@ TachiyomiS97 is a modified version of [TachiyomiJ2K](https://github.com/jays2kin
 
 ## Features
 
-Visit [Commits of Tachiyomis97](https://github.com/saud-97/tachiyomiS97/commits/master) to see full list of changes made to TachiyomiJ2K.
+Visit [Commits of Tachiyomis97](https://github.com/saud-97/tachiyomiS97/commits/main) to see full list of changes made to TachiyomiJ2K.
 
 
 ## License
