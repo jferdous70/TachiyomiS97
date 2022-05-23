@@ -898,7 +898,7 @@ class MangaDetailsPresenter(
                         }
                         if (trackItem != null) {
                             db.insertTrack(trackItem).executeAsBlocking()
-                            if (item.service is EnhancedTrackService) {
+                            if (item.service is EnhancedTrackService || preferences.twowaySyncTracking()) {
                                 syncChaptersWithTrackServiceTwoWay(db, chapters, trackItem, item.service)
                             }
                             trackItem
@@ -941,7 +941,7 @@ class MangaDetailsPresenter(
                         db.insertTrack(binding).executeAsBlocking()
                     }
 
-                    if (service is EnhancedTrackService) {
+                    if (service is EnhancedTrackService || preferences.twowaySyncTracking()) {
                         syncChaptersWithTrackServiceTwoWay(db, chapters, item, service)
                     }
                 }

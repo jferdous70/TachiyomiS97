@@ -28,6 +28,7 @@ import eu.kanade.tachiyomi.data.preference.MANGA_NON_READ
 import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.data.track.EnhancedTrackService
 import eu.kanade.tachiyomi.data.track.TrackManager
+import eu.kanade.tachiyomi.data.track.TrackService
 import eu.kanade.tachiyomi.extension.ExtensionUpdateJob
 import eu.kanade.tachiyomi.source.SourceManager
 import eu.kanade.tachiyomi.source.UnmeteredSource
@@ -78,6 +79,8 @@ class LibraryUpdateService(
     val trackManager: TrackManager = Injekt.get(),
     private val mangaShortcutManager: MangaShortcutManager = Injekt.get(),
 ) : Service() {
+
+    private lateinit var loggedServices: List<TrackService>
 
     /**
      * Wake lock that will be held until the service is destroyed.
@@ -331,6 +334,7 @@ class LibraryUpdateService(
         mangaToUpdate.addAll(mangaToAdd)
         mangaToUpdateMap.putAll(mangaToAdd.groupBy { it.source })
         // checkIfMassiveUpdate()
+        loggedServices = trackManager.services.filter { it.isLogged }
         coroutineScope {
             jobCount.andIncrement
             val list = mangaToUpdateMap.keys.map { source ->
@@ -354,9 +358,6 @@ class LibraryUpdateService(
 
     private suspend fun finishUpdates() {
         if (jobCount.get() != 0) return
-        if (preferences.twowaySyncTracking() && job?.isCancelled == false) {
-            updateTrackings(mangaToUpdate)
-        }
         if (newUpdates.isNotEmpty()) {
             notifier.showResultNotification(newUpdates)
 
@@ -448,6 +449,23 @@ class LibraryUpdateService(
                 if (newChapters.first.size + newChapters.second.size > 0) listener?.onUpdateManga(
                     manga,
                 )
+            }
+
+            if (preferences.twowaySyncTracking()) {
+                val tracks = db.getTracks(manga).executeAsBlocking()
+                tracks.forEach { track ->
+                    val service = trackManager.getService(track.sync_id)
+                    if (service != null && service in loggedServices) {
+                        try {
+                            val newTrack = service.refresh(track)
+                            db.insertTrack(newTrack).executeAsBlocking()
+                            syncChaptersWithTrackServiceTwoWay(db, db.getChapters(manga).executeAsBlocking(), track, service)
+                            listener?.onUpdateManga(manga)
+                        } catch (e: Exception) {
+                            Timber.e(e)
+                        }
+                    }
+                }
             }
             return hasDownloads
         } catch (e: Exception) {
@@ -545,13 +563,9 @@ class LibraryUpdateService(
                     try {
                         val newTrack = service.refresh(track)
                         db.insertTrack(newTrack).executeAsBlocking()
-                        if (preferences.twowaySyncTracking()) {
+                        if (service is EnhancedTrackService || preferences.twowaySyncTracking()) {
                             syncChaptersWithTrackServiceTwoWay(db, db.getChapters(manga).executeAsBlocking(), track, service)
                             listener?.onUpdateManga(manga)
-                        }
-
-                        if (service is EnhancedTrackService) {
-                            syncChaptersWithTrackServiceTwoWay(db, db.getChapters(manga).executeAsBlocking(), track, service)
                         }
                     } catch (e: Exception) {
                         Timber.e(e)
