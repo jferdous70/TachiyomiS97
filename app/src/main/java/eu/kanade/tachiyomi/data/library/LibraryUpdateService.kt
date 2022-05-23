@@ -332,7 +332,7 @@ class LibraryUpdateService(
         // Initialize the variables holding the progress of the updates.
 
         mangaToUpdate.addAll(mangaToAdd)
-        mangaToUpdateMap.putAll(mangaToAdd.groupBy { it.source })
+        mangaToUpdateMap.putAll(mangaToAdd.groupBy { it.source + (0..4).random() })
         // checkIfMassiveUpdate()
         loggedServices = trackManager.services.filter { it.isLogged }
         coroutineScope {
@@ -382,7 +382,7 @@ class LibraryUpdateService(
         }
         if (failedUpdates.isNotEmpty() && Notifications.isNotificationChannelEnabled(this, Notifications.CHANNEL_LIBRARY_ERROR)) {
             val errorFile = writeErrorFile(failedUpdates).getUriCompat(this)
-            notifier.showUpdateErrorNotification(failedUpdates.map { it.key.title }, errorFile)
+            notifier.showUpdateErrorNotification(failedUpdates.map { "${it.value}: ${it.key.title}" }, errorFile)
         }
         mangaShortcutManager.updateShortcuts()
         failedUpdates.clear()
