@@ -17,10 +17,6 @@ if (gradle.startParameter.taskRequests.toString().contains("Standard")) {
     apply<com.google.gms.googleservices.GoogleServicesPlugin>()
 }
 
-fun getBuildTime() = DateTimeFormatter.ISO_DATE_TIME.format(LocalDateTime.now(ZoneOffset.UTC))
-fun getCommitCount() = runCommand("git rev-list --count HEAD")
-fun getGitSha() = runCommand("git rev-parse --short HEAD")
-
 fun runCommand(command: String): String {
     val byteOut = ByteArrayOutputStream()
     project.exec {
@@ -46,9 +42,11 @@ android {
         multiDexEnabled = true
 
         buildConfigField("String", "COMMIT_COUNT", "\"${getCommitCount()}\"")
+        buildConfigField("String", "BETA_COMMIT_COUNT", "\"${getCommitCountSinceLastRelease()}\"")
         buildConfigField("String", "COMMIT_SHA", "\"${getGitSha()}\"")
         buildConfigField("String", "BUILD_TIME", "\"${getBuildTime()}\"")
         buildConfigField("Boolean", "INCLUDE_UPDATER", "false")
+        buildConfigField("boolean", "BETA", "false")
 
         ndk {
             abiFilters += supportedAbis
@@ -81,6 +79,7 @@ android {
     buildTypes {
         getByName("debug") {
             applicationIdSuffix = ".s97.debug"
+	        versionNameSuffix = "-d${getCommitCount()}"
         }
         getByName("release") {
             applicationIdSuffix = ".s97"
@@ -88,6 +87,12 @@ android {
             isShrinkResources = true
             isMinifyEnabled = true
             proguardFiles("proguard-android-optimize.txt", "proguard-rules.pro")
+        }
+        create("beta") {
+            initWith(getByName("release"))
+            buildConfigField("boolean", "BETA", "true")
+
+            versionNameSuffix = "-b${getCommitCountSinceLastRelease()}"
         }
     }
 
@@ -179,6 +184,7 @@ dependencies {
     val chuckerVersion = "3.5.2"
     debugImplementation("com.github.ChuckerTeam.Chucker:library:$chuckerVersion")
     releaseImplementation("com.github.ChuckerTeam.Chucker:library-no-op:$chuckerVersion")
+    add("betaImplementation", "com.github.ChuckerTeam.Chucker:library-no-op:$chuckerVersion")
 
     implementation(kotlin("reflect", version = AndroidVersions.kotlin))
 
