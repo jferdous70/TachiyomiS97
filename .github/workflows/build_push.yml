@@ -81,9 +81,8 @@ jobs:
           tag_name: ${{ env.VERSION_TAG }}
           name: TachiyomiS97 ${{ env.VERSION_TAG }}
           body: |
-            ### Changes
             [Full changelog](https://github.com/saud-97/TachiyomiS97/compare/${{ steps.last_release.outputs.tag_name }}...${{ env.VERSION_TAG }})
-
+            ### Changes
             ${{ env.COMMIT_LOGS }}
 
             ---
