@@ -9,13 +9,13 @@ TachiyomiS97 is a modified version of [TachiyomiJ2K](https://github.com/jays2kin
 New features only in this fork include:
 * Up to 6x times faster Global Searches
 * Up to 5x times faster Global Updates
-* up to 4x times faster Chapter Downloads
+* Up to 4x times faster Chapter Downloads
 * Implemented read progress sync cross-devices
 * Silenced mass download and mass update warnings
 * Allowed to simultaneously update library and download chapters
-* Added force bypass for cloudflare failures.
 * Auto download next unread chapters while reading
-* Allowed more back up intervals and increased max number of backups
+* Added force bypass for cloudflare failures
+* Added more back up intervals and increased max number of backups
 
 ## Features
 
