@@ -16,6 +16,7 @@ plugins {
 if (gradle.startParameter.taskRequests.toString().contains("Standard")) {
     apply<com.google.gms.googleservices.GoogleServicesPlugin>()
 }
+fun getBuildTime() = DateTimeFormatter.ISO_DATE_TIME.format(LocalDateTime.now(ZoneOffset.UTC))
 
 fun runCommand(command: String): String {
     val byteOut = ByteArrayOutputStream()
