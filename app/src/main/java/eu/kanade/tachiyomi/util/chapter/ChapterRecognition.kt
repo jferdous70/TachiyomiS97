@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.util.chapter
 
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
-import java.util.Locale
 
 /**
  * -R> = regex conversion.
@@ -45,7 +44,7 @@ object ChapterRecognition {
         }
 
         // Get chapter title with lower case
-        var name = chapter.name.lowercase(Locale.getDefault())
+        var name = chapter.name.lowercase()
 
         // Remove comma's or hyphens.
         name = name.replace(',', '.').replace('-', '.')
@@ -78,7 +77,7 @@ object ChapterRecognition {
         }
 
         // Remove manga title from chapter title.
-        val nameWithoutManga = name.replace(manga.originalTitle.lowercase(Locale.getDefault()), "").trim()
+        val nameWithoutManga = name.replace(manga.originalTitle.lowercase(), "").trim()
 
         // Check if first value is number after title remove.
         if (updateChapter(withoutManga.find(nameWithoutManga), chapter)) {

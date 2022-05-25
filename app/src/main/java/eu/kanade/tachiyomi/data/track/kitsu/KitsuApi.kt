@@ -12,10 +12,10 @@ import eu.kanade.tachiyomi.util.system.withIOContext
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.long
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonObject
 import okhttp3.FormBody
@@ -25,7 +25,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
-import kotlin.math.max
+import kotlin.math.min
 
 class KitsuApi(private val client: OkHttpClient, interceptor: KitsuInterceptor) {
 
@@ -70,7 +70,7 @@ class KitsuApi(private val client: OkHttpClient, interceptor: KitsuInterceptor) 
                 .await()
                 .parseAs<JsonObject>()
                 .let {
-                    track.media_id = it["data"]!!.jsonObject["id"]!!.jsonPrimitive.int
+                    track.media_id = it["data"]!!.jsonObject["id"]!!.jsonPrimitive.long
                     track
                 }
         }
@@ -84,7 +84,7 @@ class KitsuApi(private val client: OkHttpClient, interceptor: KitsuInterceptor) 
                     put("id", track.media_id)
                     putJsonObject("attributes") {
                         put("status", track.toKitsuStatus())
-                        put("progress", max(track.total_chapters, track.last_chapter_read.toInt()))
+                        put("progress", min(track.total_chapters, track.last_chapter_read.toInt()))
                         put("ratingTwenty", track.toKitsuScore())
                         put("startedAt", KitsuDateHelper.convert(track.started_reading_date))
                         put("finishedAt", KitsuDateHelper.convert(track.finished_reading_date))
@@ -282,7 +282,7 @@ class KitsuApi(private val client: OkHttpClient, interceptor: KitsuInterceptor) 
         private const val algoliaFilter =
             "&facetFilters=%5B%22kind%3Amanga%22%5D&attributesToRetrieve=%5B%22synopsis%22%2C%22canonicalTitle%22%2C%22chapterCount%22%2C%22posterImage%22%2C%22startDate%22%2C%22subtype%22%2C%22endDate%22%2C%20%22id%22%5D"
 
-        fun mangaUrl(remoteId: Int): String {
+        fun mangaUrl(remoteId: Long): String {
             return baseMangaUrl + remoteId
         }
 
