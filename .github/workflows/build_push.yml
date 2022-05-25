@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version'     
+        description: 'Version'
         required: true
         type: string
         
@@ -48,6 +48,19 @@ jobs:
           exclude_types: "draft|prerelease"
           view_top: 1
 
+      - name: Get tag name from inputs
+        if: github.event.inputs.version != ''
+        run: |
+          set -x
+          echo "VERSION_TAG=${{github.event.inputs.version}}" >> $GITHUB_ENV
+
+      - name: Get tag name from head commit message
+        if: startsWith(github.event.head_commit.message, 'Version ')
+        run: |
+          set -x
+          VERSION="${{ github.event.head_commit.message }}"
+          echo "VERSION_TAG=v${VERSION:8}" >> $GITHUB_ENV
+
       - name: Prepare build
         run: |
           set -e
@@ -59,12 +72,6 @@ jobs:
         uses: gradle/gradle-command-action@v2
         with:
           arguments: assembleStandardRelease
-
-      - name: Get tag name
-        if: github.event.inputs.version != ''
-        run: |
-          set -x
-          echo "VERSION_TAG=${{github.event.inputs.version}}" >> $GITHUB_ENV
 
       - name: Clean up build artifacts
         if: env.VERSION_TAG != ''
