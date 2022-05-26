@@ -84,7 +84,7 @@ android {
         }
         getByName("release") {
             applicationIdSuffix = ".s97"
-            signingConfig = signingConfigs.getByName("debug")
+           // signingConfig = signingConfigs.getByName("debug")
             isShrinkResources = true
             isMinifyEnabled = true
             proguardFiles("proguard-android-optimize.txt", "proguard-rules.pro")
