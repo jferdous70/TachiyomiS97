@@ -78,10 +78,10 @@ jobs:
         uses: r0adkll/sign-android-release@v1
         with:
           releaseDirectory: app/build/outputs/apk/standard/release
-          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+          signingKeyBase64: ${{ secrets.SIGNINGKEYBASE64 }}
           alias: ${{ secrets.ALIAS }}
-          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
-          keyPassword: ${{ secrets.KEY_PASSWORD }}
+          keyStorePassword: ${{ secrets.KEYSTOREPASSWORD }}
+          keyPassword: ${{ secrets.KEYPASSWORD }}
 
       - name: Clean up build artifacts
         if: env.VERSION_TAG != ''
