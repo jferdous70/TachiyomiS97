@@ -254,6 +254,11 @@ class SettingsAdvancedController : SettingsController() {
                     true
                 }
             }
+            switchPreference {
+                key = PreferenceKeys.forceBypassCloudflare
+                titleRes = R.string.force_bypass_cloudflare
+                defaultValue = false
+            }
         }
 
         preferenceCategory {

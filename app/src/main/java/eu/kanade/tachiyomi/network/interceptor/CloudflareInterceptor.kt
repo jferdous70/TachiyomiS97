@@ -10,6 +10,7 @@ import android.webkit.WebView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import eu.kanade.tachiyomi.R
+import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.system.WebViewClientCompat
@@ -33,7 +34,7 @@ import java.util.concurrent.TimeUnit
 class CloudflareInterceptor(private val context: Context) : Interceptor {
 
     private val executor = ContextCompat.getMainExecutor(context)
-
+    private val preferences: PreferencesHelper by injectLazy()
     private val networkHelper: NetworkHelper by injectLazy()
 
     /**
@@ -77,22 +78,26 @@ class CloudflareInterceptor(private val context: Context) : Interceptor {
             networkHelper.cookieManager.remove(originalRequest.url, COOKIE_NAMES, 0)
             val oldCookie = networkHelper.cookieManager.get(originalRequest.url)
                 .firstOrNull { it.name == "cf_clearance" }
-
-            for (i in 1..10) {
-                try {
-                    resolveWithWebView(originalRequest, oldCookie)
-                    break
-                } catch (e: CloudflareBypassException) {
-                    // clearwebviewdata
-                    context.applicationInfo?.dataDir?.let { File("$it/app_webview/").deleteRecursively() }
-                    val msg = "Trying to force bypass cloudflare. Attempt: $i"
-                    Handler(Looper.getMainLooper()).post {
-                        Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
-                    }
-                    if (i == 10) {
-                        throw e
+			
+            if (preferences.forceBypassCloudflare()) {
+                for (i in 1..10) {
+                    try {
+                        resolveWithWebView(originalRequest, oldCookie)
+                        break
+                    } catch (e: CloudflareBypassException) {
+                        // clearwebviewdata
+                        context.applicationInfo?.dataDir?.let { File("$it/app_webview/").deleteRecursively() }
+                        val msg = "Trying to force bypass cloudflare. Attempt: $i"
+                        Handler(Looper.getMainLooper()).post {
+                            Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+                        }
+                        if (i == 10) {
+                            throw e
+                        }
                     }
                 }
+            } else {
+                resolveWithWebView(originalRequest, oldCookie)
             }
 
             return chain.proceed(originalRequest)
