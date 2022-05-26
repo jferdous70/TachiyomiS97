@@ -62,4 +62,5 @@ data class AvailableExtensionSources(
     val name: String,
     val id: Long,
     val baseUrl: String,
+    val lang: String,
 )

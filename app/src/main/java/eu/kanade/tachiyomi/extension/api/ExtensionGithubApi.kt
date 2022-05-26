@@ -111,6 +111,7 @@ internal class ExtensionGithubApi {
                 name = it.name,
                 id = it.id,
                 baseUrl = it.baseUrl,
+                lang = it.lang,
             )
         }
     }
@@ -150,4 +151,5 @@ private data class ExtensionSourceJsonObject(
     val name: String,
     val id: Long,
     val baseUrl: String,
+    val lang: String,
 )

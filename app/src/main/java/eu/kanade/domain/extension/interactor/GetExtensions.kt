@@ -38,7 +38,7 @@ class GetExtensions(
                 .filter { extension ->
                     _installed.none { it.pkgName == extension.pkgName } &&
                         _untrusted.none { it.pkgName == extension.pkgName } &&
-                        extension.lang in _activeLanguages &&
+                        (extension.lang in _activeLanguages || extension.sources.any { it.lang in _activeLanguages }) &&
                         (showNsfwSources || extension.isNsfw.not())
                 }
 
