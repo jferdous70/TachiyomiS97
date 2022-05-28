@@ -779,7 +779,8 @@ class MangaPresenter(
                     val hasReadChapters = allChapters.any { it.read }
                     service.bind(item, hasReadChapters)
                     db.insertTrack(item).executeAsBlocking()
-
+                    item.last_chapter_read = allChapters.sortedBy { it.chapter_number }.takeWhile { it.read }.lastOrNull()?.chapter_number ?: 0F
+                    setTrackerLastChapterRead(TrackItem(item, service), item.last_chapter_read.toInt())
                     if (service is EnhancedTrackService) {
                         syncChaptersWithTrackServiceTwoWay(db, allChapters, item, service)
                     }
