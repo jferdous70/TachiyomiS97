@@ -780,7 +780,7 @@ class MangaPresenter(
                     service.bind(item, hasReadChapters)
                     db.insertTrack(item).executeAsBlocking()
 
-                    if(item.last_chapter_read <= 1) {
+                    if (item.last_chapter_read <= 1) {
                         item.last_chapter_read =  allChapters.sortedBy { it.chapter_number }.takeWhile { it.read }.lastOrNull()?.chapter_number ?: item.last_chapter_read
                         setTrackerLastChapterRead(TrackItem(item, service), item.last_chapter_read.toInt())
                     }
