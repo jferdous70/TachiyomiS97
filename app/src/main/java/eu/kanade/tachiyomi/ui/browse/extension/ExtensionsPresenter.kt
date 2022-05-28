@@ -9,6 +9,7 @@ import androidx.compose.runtime.setValue
 import eu.kanade.domain.extension.interactor.GetExtensionUpdates
 import eu.kanade.domain.extension.interactor.GetExtensions
 import eu.kanade.tachiyomi.R
+import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.extension.ExtensionManager
 import eu.kanade.tachiyomi.extension.model.Extension
 import eu.kanade.tachiyomi.extension.model.InstallStep
@@ -25,12 +26,15 @@ import kotlinx.coroutines.flow.update
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 
 class ExtensionsPresenter(
     private val extensionManager: ExtensionManager = Injekt.get(),
     private val getExtensionUpdates: GetExtensionUpdates = Injekt.get(),
     private val getExtensions: GetExtensions = Injekt.get(),
 ) : BasePresenter<ExtensionsController>() {
+
+    private val preferences: PreferencesHelper by injectLazy()
 
     private val _query: MutableStateFlow<String> = MutableStateFlow("")
 
@@ -88,7 +92,22 @@ class ExtensionsPresenter(
             ) { query, (installed, untrusted, available), updates, downloads ->
                 isRefreshing = false
 
-                val languagesWithExtensions = available
+                val flattenedAvailable = emptyList<Extension.Available>().toMutableSet()
+                val activeLanguages = preferences.enabledLanguages().get()
+
+                available.forEach { ext ->
+                    ext.sources.forEachIndexed { i, it ->
+                        if (it.lang in activeLanguages) {
+                            if (ext.lang == it.lang) {
+                                flattenedAvailable.add(ext)
+                            } else {
+                                flattenedAvailable.add(it.toExtension(ext, i))
+                            }
+                        }
+                    }
+                }
+
+                val languagesWithExtensions = flattenedAvailable
                     .filter(queryFilter(query))
                     .groupBy { LocaleHelper.getSourceDisplayName(it.lang, context) }
                     .toSortedMap()
