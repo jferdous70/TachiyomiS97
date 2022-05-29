@@ -9,7 +9,6 @@ import androidx.compose.runtime.setValue
 import eu.kanade.domain.extension.interactor.GetExtensionUpdates
 import eu.kanade.domain.extension.interactor.GetExtensions
 import eu.kanade.tachiyomi.R
-import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.extension.ExtensionManager
 import eu.kanade.tachiyomi.extension.model.Extension
 import eu.kanade.tachiyomi.extension.model.InstallStep
@@ -26,15 +25,12 @@ import kotlinx.coroutines.flow.update
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import uy.kohesive.injekt.injectLazy
 
 class ExtensionsPresenter(
     private val extensionManager: ExtensionManager = Injekt.get(),
     private val getExtensionUpdates: GetExtensionUpdates = Injekt.get(),
     private val getExtensions: GetExtensions = Injekt.get(),
 ) : BasePresenter<ExtensionsController>() {
-
-    private val preferences: PreferencesHelper by injectLazy()
 
     private val _query: MutableStateFlow<String> = MutableStateFlow("")
 
@@ -92,14 +88,7 @@ class ExtensionsPresenter(
             ) { query, (installed, untrusted, available), updates, downloads ->
                 isRefreshing = false
 
-                val activeLanguages = preferences.enabledLanguages().get()
-                val flattenedAvailable = available.flatMap { ext ->
-                    ext.sources.filter { it.lang in activeLanguages }.mapIndexed { i, it ->
-                        if (ext.lang == it.lang) ext
-                        else ext.copy(name = it.name, lang = it.lang, pkgName = ext.pkgName + i)
-                    }
-                }.toSet()
-                val languagesWithExtensions = flattenedAvailable
+                val languagesWithExtensions = available
                     .filter(queryFilter(query))
                     .groupBy { LocaleHelper.getSourceDisplayName(it.lang, context) }
                     .toSortedMap()
@@ -113,13 +102,14 @@ class ExtensionsPresenter(
                 val items = mutableListOf<ExtensionUiModel>()
 
                 val updates = updates.filter(queryFilter(query)).map(extensionMapper(downloads))
+                val installed = installed.filter(queryFilter(query)).map(extensionMapper(downloads))
+                val untrusted = untrusted.filter(queryFilter(query)).map(extensionMapper(downloads))
+
                 if (updates.isNotEmpty()) {
                     items.add(ExtensionUiModel.Header.Resource(R.string.ext_updates_pending))
                     items.addAll(updates)
                 }
 
-                val installed = installed.filter(queryFilter(query)).map(extensionMapper(downloads))
-                val untrusted = untrusted.filter(queryFilter(query)).map(extensionMapper(downloads))
                 if (installed.isNotEmpty() || untrusted.isNotEmpty()) {
                     items.add(ExtensionUiModel.Header.Resource(R.string.ext_installed))
                     items.addAll(installed)

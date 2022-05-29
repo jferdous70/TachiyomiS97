@@ -7,7 +7,7 @@ import eu.kanade.tachiyomi.extension.model.Extension
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 
-typealias ExtensionSegregation = Triple<List<Extension.Installed>, List<Extension.Untrusted>, List<Extension.Available>>
+typealias ExtensionSegregation = Triple<List<Extension.Installed>, List<Extension.Untrusted>, Set<Extension.Available>>
 
 class GetExtensions(
     private val preferences: PreferencesHelper,
@@ -40,7 +40,15 @@ class GetExtensions(
                         _untrusted.none { it.pkgName == extension.pkgName } &&
                         (extension.lang in _activeLanguages || extension.sources.any { it.lang in _activeLanguages }) &&
                         (showNsfwSources || extension.isNsfw.not())
-                }
+                }.flatMap { extension ->
+                    extension.sources.filter { it.lang in _activeLanguages }.map {
+                        extension.copy(
+                            name = if (it.lang == extension.lang) extension.name else it.name,
+                            lang = it.lang,
+                            pkgName = extension.pkgName + ".${it.lang}",
+                        )
+                    }
+                }.toSet()
 
             Triple(installed, untrusted, available)
         }
