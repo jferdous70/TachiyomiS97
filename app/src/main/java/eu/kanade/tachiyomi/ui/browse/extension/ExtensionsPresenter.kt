@@ -92,21 +92,13 @@ class ExtensionsPresenter(
             ) { query, (installed, untrusted, available), updates, downloads ->
                 isRefreshing = false
 
-                val flattenedAvailable = emptyList<Extension.Available>().toMutableSet()
                 val activeLanguages = preferences.enabledLanguages().get()
-
-                available.forEach { ext ->
-                    ext.sources.forEachIndexed { i, it ->
-                        if (it.lang in activeLanguages) {
-                            if (ext.lang == it.lang) {
-                                flattenedAvailable.add(ext)
-                            } else {
-                                flattenedAvailable.add(it.toExtension(ext, i))
-                            }
-                        }
+                val flattenedAvailable = available.flatMap { ext ->
+                    ext.sources.filter { it.lang in activeLanguages }.mapIndexed { i, it ->
+                        if (ext.lang == it.lang) ext
+                        else ext.copy(name = it.name, lang = it.lang, pkgName = ext.pkgName + i)
                     }
-                }
-
+                }.toSet()
                 val languagesWithExtensions = flattenedAvailable
                     .filter(queryFilter(query))
                     .groupBy { LocaleHelper.getSourceDisplayName(it.lang, context) }

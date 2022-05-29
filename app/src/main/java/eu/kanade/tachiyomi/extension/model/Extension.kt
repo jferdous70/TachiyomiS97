@@ -63,20 +63,4 @@ data class AvailableExtensionSources(
     val id: Long,
     val baseUrl: String,
     val lang: String,
-) {
-    fun toExtension(ext: Extension.Available, index: Int): Extension.Available {
-        return Extension.Available(
-            name,
-            ext.pkgName + index,
-            ext.versionName,
-            ext.versionCode,
-            lang,
-            ext.isNsfw,
-            ext.hasReadme,
-            ext.hasChangelog,
-            ext.sources,
-            ext.apkName,
-            ext.iconUrl,
-        )
-    }
-}
+)
