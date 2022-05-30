@@ -92,10 +92,14 @@ class ExtensionsPresenter(
                     .filter(queryFilter(query))
                     .groupBy { LocaleHelper.getSourceDisplayName(it.lang, context) }
                     .toSortedMap()
-                    .flatMap { (key, value) ->
-                        listOf(
-                            ExtensionUiModel.Header.Text(key),
-                            *value.map(extensionMapper(downloads)).toTypedArray(),
+                    .flatMap { (lang, sources) ->
+                        val sources = sources.groupBy { it.pkgName.contains(".all.") }.toSortedMap()
+	                        .flatMap { (all, sources) ->
+		                        if (all) sources.map { it.copy(lang = "all") } else sources
+	                        }
+
+                        listOf(ExtensionUiModel.Header.Text(lang),
+                            *sources.map(extensionMapper(downloads)).toTypedArray(),
                         )
                     }
 
