@@ -94,11 +94,12 @@ class ExtensionsPresenter(
                     .toSortedMap()
                     .flatMap { (lang, sources) ->
                         val sources = sources.groupBy { it.pkgName.contains(".all.") }.toSortedMap()
-	                        .flatMap { (all, sources) ->
-		                        if (all) sources.map { it.copy(lang = "all") } else sources
-	                        }
+                            .flatMap { (all, sources) ->
+                                if (all) sources.map { it.copy(lang = "all") } else sources
+                            }
 
-                        listOf(ExtensionUiModel.Header.Text(lang),
+                        listOf(
+                            ExtensionUiModel.Header.Text(lang),
                             *sources.map(extensionMapper(downloads)).toTypedArray(),
                         )
                     }
