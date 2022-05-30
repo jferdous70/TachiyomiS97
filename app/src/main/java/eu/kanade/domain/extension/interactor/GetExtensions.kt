@@ -41,11 +41,13 @@ class GetExtensions(
                         (showNsfwSources || extension.isNsfw.not())
                 }.flatMap { extension ->
                     extension.sources.filter { it.lang in _activeLanguages }.sortedBy { it.name }.map {
-                        extension.copy(
-                            name = if (it.lang == extension.lang) extension.name else it.name,
-                            lang = it.lang,
-                            pkgName = extension.pkgName + ".${it.lang}",
-                        )
+                        if (it.lang == extension.lang) extension else {
+                            extension.copy(
+                                name = it.name,
+                                lang = it.lang,
+                                pkgName = extension.pkgName + ".${it.lang}",
+                            )
+                        }
                     }
                 }.distinct()
 
