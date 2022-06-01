@@ -50,6 +50,7 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
+import kotlin.math.abs
 import kotlin.random.Random
 
 /**
@@ -1058,9 +1059,13 @@ class LibraryPresenter(
     fun downloadUnread(mangaList: List<Manga>) {
         presenterScope.launch {
             withContext(Dispatchers.IO) {
-                mangaList.forEach {
-                    val chapters = db.getChapters(it).executeAsBlocking().filter { !it.read }
-                    downloadManager.downloadChapters(it, chapters)
+                mangaList.forEach { manga ->
+                    val chaptersDB = db.getChapters(manga).executeAsBlocking().sortedBy { it.chapter_number }
+                    val chapters = chaptersDB.filter { !it.read }.toMutableList()
+                    val firstChapter = chapters.first()
+                    chapters.addAll(0, chaptersDB.filter { abs(it.chapter_number - firstChapter.chapter_number) <= 2 })
+
+                    downloadManager.downloadChapters(manga, chapters)
                 }
             }
             if (preferences.downloadBadge().get()) {
