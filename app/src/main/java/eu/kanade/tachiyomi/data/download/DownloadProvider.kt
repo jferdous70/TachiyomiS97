@@ -13,6 +13,7 @@ import eu.kanade.tachiyomi.source.SourceManager
 import eu.kanade.tachiyomi.util.storage.DiskUtil
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.onEach
+import timber.log.Timber
 import uy.kohesive.injekt.injectLazy
 
 /**
@@ -54,6 +55,8 @@ class DownloadProvider(private val context: Context) {
             return downloadsDir.createDirectory(getSourceDirName(source))
                 .createDirectory(getMangaDirName(manga))
         } catch (e: NullPointerException) {
+            Timber.e(context.getString(R.string.invalid_download_location))
+            Timber.e(e)
             throw Exception(context.getString(R.string.invalid_download_location))
         }
     }
