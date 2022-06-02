@@ -1065,7 +1065,7 @@ class LibraryPresenter(
                     val firstChapter = chapters.first()
                     chapters.addAll(0, chaptersDB.filter { abs(it.chapter_number - firstChapter.chapter_number) <= 2 })
 
-                    downloadManager.downloadChapters(manga, chapters)
+                    downloadManager.downloadChapters(manga, chapters.distinct())
                 }
             }
             if (preferences.downloadBadge().get()) {
