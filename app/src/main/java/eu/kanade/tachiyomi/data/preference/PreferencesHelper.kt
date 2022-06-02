@@ -168,7 +168,7 @@ class PreferencesHelper(val context: Context) {
 
     fun sourceDisplayMode() = flowPrefs.getEnum("pref_display_mode_catalogue", DisplayModeSetting.COMPACT_GRID)
 
-    fun enabledLanguages() = flowPrefs.getStringSet("source_languages", setOf("all", "en", Locale.getDefault().language))
+    fun enabledLanguages() = flowPrefs.getStringSet("source_languages", setOf("en", Locale.getDefault().language))
 
     fun trackUsername(sync: TrackService) = prefs.getString(Keys.trackUsername(sync.id), "")
 
