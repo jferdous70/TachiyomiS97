@@ -103,6 +103,6 @@ fun MangaInfo.toSManga(): SManga {
         description = mangaInfo.description
         genre = mangaInfo.genres.joinToString(", ")
         status = mangaInfo.status
-        thumbnail_url = if (mangaInfo.cover.contains("http://www.w3.org")) null else mangaInfo.cover
+        thumbnail_url = mangaInfo.cover
     }
 }
