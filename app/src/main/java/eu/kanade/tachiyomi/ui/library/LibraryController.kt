@@ -434,12 +434,12 @@ class LibraryController(
 
     fun showCategoryText(name: String) {
         textAnim?.cancel()
+        binding.jumperCategoryText.alpha = 1f
+        binding.jumperCategoryText.text = name
         textAnim = binding.jumperCategoryText.animate().alpha(0f).setDuration(250L).setStartDelay(
             2000,
         )
         textAnim?.start()
-        binding.jumperCategoryText.alpha = 1f
-        binding.jumperCategoryText.text = name
     }
 
     fun isAtTop(): Boolean {
@@ -1215,8 +1215,9 @@ class LibraryController(
         val headerPosition = adapter.indexOf(pos)
         if (headerPosition > -1) {
             val activityBinding = activityBinding ?: return
-            val appbarOffset = if (pos <= 0) 0 else -fullAppBarHeight!! + activityBinding.cardFrame.height
-            val previousHeader = adapter.getItem(adapter.indexOf(pos - 1)) as? LibraryHeaderItem
+            val index = adapter.headerItems.indexOf(adapter.getItem(headerPosition))
+            val appbarOffset = if (index <= 0) 0 else -fullAppBarHeight!! + activityBinding.cardFrame.height
+            val previousHeader = adapter.headerItems.getOrNull(index - 1) as? LibraryHeaderItem
             binding.libraryGridRecycler.recycler.scrollToPositionWithOffset(
                 headerPosition,
                 (

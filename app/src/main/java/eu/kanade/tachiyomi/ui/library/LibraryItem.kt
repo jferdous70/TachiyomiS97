@@ -20,7 +20,6 @@ import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.databinding.MangaGridItemBinding
 import eu.kanade.tachiyomi.source.SourceManager
 import eu.kanade.tachiyomi.util.system.dpToPx
-import eu.kanade.tachiyomi.util.system.spToPx
 import eu.kanade.tachiyomi.util.view.compatToolTipText
 import eu.kanade.tachiyomi.widget.AutofitRecyclerView
 import uy.kohesive.injekt.Injekt
@@ -96,11 +95,6 @@ class LibraryItem(
                     if (libraryLayout != LAYOUT_COMFORTABLE_GRID) {
                         binding.card.updateLayoutParams<ConstraintLayout.LayoutParams> {
                             bottomMargin = (if (isStaggered) 2 else 6).dpToPx
-                        }
-                    } else {
-                        binding.textLayout.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                            height =
-                                if (isStaggered) ViewGroup.LayoutParams.WRAP_CONTENT else 31.spToPx
                         }
                     }
                     binding.setBGAndFG(libraryLayout)

@@ -36,6 +36,7 @@ import eu.kanade.tachiyomi.util.system.dpToPx
 import eu.kanade.tachiyomi.util.system.getResourceColor
 import eu.kanade.tachiyomi.util.system.isInNightMode
 import eu.kanade.tachiyomi.util.system.materialAlertDialog
+import eu.kanade.tachiyomi.widget.TachiyomiTextInputEditText
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -49,7 +50,7 @@ class EditMangaDialog : DialogController {
     private var willResetCover = false
 
     lateinit var binding: EditMangaDialogBinding
-    val langauges = mutableListOf<String>()
+    private val languages = mutableListOf<String>()
 
     private val infoController
         get() = targetController as MangaDetailsController
@@ -107,8 +108,8 @@ class EditMangaDialog : DialogController {
             val extensionManager: ExtensionManager by injectLazy()
             val activeLangs = preferences.enabledLanguages().get()
 
-            langauges.add("")
-            langauges.addAll(
+            languages.add("")
+            languages.addAll(
                 extensionManager.availableExtensions.groupBy { it.lang }.keys
                     .sortedWith(
                         compareBy(
@@ -119,12 +120,12 @@ class EditMangaDialog : DialogController {
                     .filter { it != "all" },
             )
             binding.mangaLang.setEntries(
-                langauges.map {
+                languages.map {
                     LocaleHelper.getSourceDisplayName(it, binding.root.context)
                 },
             )
             binding.mangaLang.setSelection(
-                langauges.indexOf(LocalSource.getMangaLang(manga, binding.root.context))
+                languages.indexOf(LocalSource.getMangaLang(manga, binding.root.context))
                     .takeIf { it > -1 } ?: 0,
             )
         } else {
@@ -140,6 +141,10 @@ class EditMangaDialog : DialogController {
             if (manga.description != manga.originalDescription) {
                 binding.mangaDescription.append(manga.description ?: "")
             }
+            binding.title.appendOriginalTextOnLongClick(manga.originalTitle)
+            binding.mangaAuthor.appendOriginalTextOnLongClick(manga.originalAuthor)
+            binding.mangaArtist.appendOriginalTextOnLongClick(manga.originalArtist)
+            binding.mangaDescription.appendOriginalTextOnLongClick(manga.originalDescription)
             binding.title.hint = "${resources?.getString(R.string.title)}: ${manga.originalTitle}"
             if (manga.originalAuthor != null) {
                 binding.mangaAuthor.hint = "${resources?.getString(R.string.author)}: ${manga.originalAuthor}"
@@ -213,6 +218,15 @@ class EditMangaDialog : DialogController {
             )
             customCoverUri = null
             willResetCover = true
+        }
+    }
+
+    private fun TachiyomiTextInputEditText.appendOriginalTextOnLongClick(originalText: String?) {
+        setOnLongClickListener {
+            if (this.text.isNullOrBlank()) {
+                this.append(originalText ?: "")
+                true
+            } else false
         }
     }
 
@@ -331,7 +345,7 @@ class EditMangaDialog : DialogController {
             binding.mangaGenresTags.tags,
             binding.mangaStatus.selectedPosition,
             if (binding.resetsReadingMode.isVisible) binding.seriesType.selectedPosition + 1 else null,
-            langauges.getOrNull(binding.mangaLang.selectedPosition),
+            languages.getOrNull(binding.mangaLang.selectedPosition),
             willResetCover,
         )
     }
