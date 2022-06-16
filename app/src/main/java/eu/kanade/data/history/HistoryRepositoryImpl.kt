@@ -5,6 +5,7 @@ import eu.kanade.data.DatabaseHandler
 import eu.kanade.data.chapter.chapterMapper
 import eu.kanade.data.manga.mangaMapper
 import eu.kanade.domain.chapter.model.Chapter
+import eu.kanade.domain.history.model.HistoryUpdate
 import eu.kanade.domain.history.model.HistoryWithRelations
 import eu.kanade.domain.history.repository.HistoryRepository
 import eu.kanade.domain.manga.model.Manga
@@ -25,7 +26,13 @@ class HistoryRepositoryImpl(
         )
     }
 
-    override suspend fun getNextChapterForManga(mangaId: Long, chapterId: Long): Chapter? {
+    override suspend fun getLastHistory(): HistoryWithRelations? {
+        return handler.awaitOneOrNull {
+            historyViewQueries.getLatestHistory(historyWithRelationsMapper)
+        }
+    }
+
+    override suspend fun getNextChapter(mangaId: Long, chapterId: Long): Chapter? {
         val chapter = handler.awaitOne { chaptersQueries.getChapterById(chapterId, chapterMapper) }
         val manga = handler.awaitOne { mangasQueries.getMangaById(mangaId, mangaMapper) }
 
@@ -40,7 +47,7 @@ class HistoryRepositoryImpl(
             else -> throw NotImplementedError("Unknown sorting method")
         }
 
-        val chapters = handler.awaitList { chaptersQueries.getChapterByMangaId(mangaId, chapterMapper) }
+        val chapters = handler.awaitList { chaptersQueries.getChaptersByMangaId(mangaId, chapterMapper) }
             .sortedWith(sortFunction)
 
         val currChapterIndex = chapters.indexOfFirst { chapter.id == it.id }
@@ -87,6 +94,20 @@ class HistoryRepositoryImpl(
         } catch (e: Exception) {
             logcat(LogPriority.ERROR, throwable = e)
             false
+        }
+    }
+
+    override suspend fun upsertHistory(historyUpdate: HistoryUpdate) {
+        try {
+            handler.await {
+                historyQueries.upsert(
+                    historyUpdate.chapterId,
+                    historyUpdate.readAt,
+                    historyUpdate.sessionReadDuration,
+                )
+            }
+        } catch (e: Exception) {
+            logcat(LogPriority.ERROR, throwable = e)
         }
     }
 }

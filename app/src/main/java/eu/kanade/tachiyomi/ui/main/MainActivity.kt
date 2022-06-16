@@ -177,6 +177,16 @@ class MainActivity : BaseActivity() {
                             router.pushController(DownloadController())
                         }
                     }
+                    R.id.nav_history -> {
+                        if (router.backstackSize == 1) {
+                            try {
+                                val historyController = router.backstack[0].controller as HistoryController
+                                historyController.resumeLastChapterRead()
+                            } catch (e: Exception) {
+                                toast(R.string.cant_open_last_read_chapter)
+                            }
+                        }
+                    }
                     R.id.nav_more -> {
                         if (router.backstackSize == 1) {
                             router.pushController(SettingsMainController())
@@ -356,7 +366,10 @@ class MainActivity : BaseActivity() {
 
             // Extension updates
             try {
-                ExtensionGithubApi().checkForUpdates(this@MainActivity)?.let { pendingUpdates ->
+                ExtensionGithubApi().checkForUpdates(
+                    this@MainActivity,
+                    fromAvailableExtensionList = true,
+                )?.let { pendingUpdates ->
                     preferences.extensionUpdatesCount().set(pendingUpdates.size)
                 }
             } catch (e: Exception) {
