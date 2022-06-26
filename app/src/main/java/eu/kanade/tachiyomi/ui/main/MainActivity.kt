@@ -43,6 +43,7 @@ import eu.kanade.tachiyomi.extension.api.ExtensionGithubApi
 import eu.kanade.tachiyomi.ui.base.activity.BaseActivity
 import eu.kanade.tachiyomi.ui.base.controller.DialogController
 import eu.kanade.tachiyomi.ui.base.controller.FabController
+import eu.kanade.tachiyomi.ui.base.controller.FullComposeController
 import eu.kanade.tachiyomi.ui.base.controller.NoAppBarElevationController
 import eu.kanade.tachiyomi.ui.base.controller.RootController
 import eu.kanade.tachiyomi.ui.base.controller.TabbedController
@@ -419,7 +420,7 @@ class MainActivity : BaseActivity() {
             SHORTCUT_MANGA -> {
                 val extras = intent.extras ?: return false
                 val fgController = router.backstack.lastOrNull()?.controller as? MangaController
-                if (fgController?.manga?.id != extras.getLong(MangaController.MANGA_EXTRA)) {
+                if (fgController?.mangaId != extras.getLong(MangaController.MANGA_EXTRA)) {
                     router.popToRoot()
                     setSelectedNavItem(R.id.nav_library)
                     router.pushController(RouterTransaction.with(MangaController(extras)))
@@ -541,15 +542,28 @@ class MainActivity : BaseActivity() {
     }
 
     private fun syncActivityViewWithController(
-        to: Controller? = router.backstack.lastOrNull()?.controller,
+        to: Controller? = null,
         from: Controller? = null,
         isPush: Boolean = true,
     ) {
-        if (from is DialogController || to is DialogController) {
-            return
-        }
-        if (from is PreferenceDialogController || to is PreferenceDialogController) {
-            return
+        var internalTo = to
+
+        if (internalTo == null) {
+            // Should go here when the activity is recreated and dialog controller is on top of the backstack
+            // Then we'll assume the top controller is the parent controller of this dialog
+            val backstack = router.backstack
+            internalTo = backstack.lastOrNull()?.controller
+            if (internalTo is DialogController || internalTo is PreferenceDialogController) {
+                internalTo = backstack.getOrNull(backstack.size - 2)?.controller ?: return
+            }
+        } else {
+            // Ignore changes for normal transactions
+            if (from is DialogController || internalTo is DialogController) {
+                return
+            }
+            if (from is PreferenceDialogController || internalTo is PreferenceDialogController) {
+                return
+            }
         }
 
         supportActionBar?.setDisplayHomeAsUpEnabled(router.backstackSize != 1)
@@ -557,10 +571,10 @@ class MainActivity : BaseActivity() {
         // Always show appbar again when changing controllers
         binding.appbar.setExpanded(true)
 
-        if ((from == null || from is RootController) && to !is RootController) {
+        if ((from == null || from is RootController) && internalTo !is RootController) {
             showNav(false)
         }
-        if (to is RootController) {
+        if (internalTo is RootController) {
             // Always show bottom nav again when returning to a RootController
             showNav(true)
         }
@@ -568,8 +582,8 @@ class MainActivity : BaseActivity() {
         if (from is TabbedController) {
             from.cleanupTabs(binding.tabs)
         }
-        if (to is TabbedController) {
-            if (to.configureTabs(binding.tabs)) {
+        if (internalTo is TabbedController) {
+            if (internalTo.configureTabs(binding.tabs)) {
                 binding.tabs.isVisible = true
             }
         } else {
@@ -579,12 +593,16 @@ class MainActivity : BaseActivity() {
         if (from is FabController) {
             from.cleanupFab(binding.fabLayout.rootFab)
         }
-        if (to is FabController) {
+        if (internalTo is FabController) {
             binding.fabLayout.rootFab.show()
-            to.configureFab(binding.fabLayout.rootFab)
+            internalTo.configureFab(binding.fabLayout.rootFab)
         } else {
             binding.fabLayout.rootFab.hide()
         }
+
+        val isFullComposeController = internalTo is FullComposeController<*>
+        binding.appbar.isVisible = !isFullComposeController
+        binding.controllerContainer.enableScrollingBehavior(!isFullComposeController)
 
         if (!isTablet()) {
             // Save lift state
@@ -599,7 +617,7 @@ class MainActivity : BaseActivity() {
                 }
                 binding.appbar.isLifted = false
             } else {
-                to?.let {
+                internalTo?.let {
                     binding.appbar.isLifted = backstackLiftState.getOrElse(it.instanceId) { false }
                 }
                 from?.let {
@@ -607,10 +625,7 @@ class MainActivity : BaseActivity() {
                 }
             }
 
-            binding.root.isLiftAppBarOnScroll = to !is NoAppBarElevationController
-
-            binding.appbar.isTransparentWhenNotLifted = to is MangaController
-            binding.controllerContainer.overlapHeader = to is MangaController
+            binding.root.isLiftAppBarOnScroll = internalTo !is NoAppBarElevationController
         }
     }
 
