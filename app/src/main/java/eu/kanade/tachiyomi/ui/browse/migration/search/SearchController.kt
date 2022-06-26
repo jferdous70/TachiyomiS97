@@ -83,8 +83,8 @@ class SearchController(
         binding.progress.isVisible = isReplacingManga
         if (!isReplacingManga) {
             router.popController(this)
-            if (newManga != null) {
-                val newMangaController = RouterTransaction.with(MangaController(newManga))
+            if (newManga?.id != null) {
+                val newMangaController = RouterTransaction.with(MangaController(newManga.id!!))
                 if (router.backstack.lastOrNull()?.controller is MangaController) {
                     // Replace old MangaController
                     router.replaceTopController(newMangaController)
@@ -140,7 +140,7 @@ class SearchController(
                 }
                 .setNeutralButton(activity?.getString(R.string.action_show_manga)) { _, _ ->
                     dismissDialog()
-                    router.pushController(MangaController(newManga))
+                    router.pushController(MangaController(newManga!!.id!!))
                 }
                 .create()
         }

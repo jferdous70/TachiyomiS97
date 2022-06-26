@@ -159,6 +159,7 @@
     <string name="pref_app_theme">App theme</string>
     <string name="theme_monet">Dynamic</string>
     <string name="theme_greenapple">Green Apple</string>
+    <string name="theme_lavender">Lavender</string>
     <string name="theme_midnightdusk">Midnight Dusk</string>
     <string name="theme_strawberrydaiquiri">Strawberry Daiquiri</string>
     <string name="theme_tako">Tako</string>
@@ -179,6 +180,7 @@
 
     <string name="pref_confirm_exit">Confirm exit</string>
     <string name="pref_manage_notifications">Manage notifications</string>
+    <string name="pref_app_language">App language</string>
 
     <string name="pref_category_security">Security</string>
     <string name="lock_with_biometrics">Require unlock</string>

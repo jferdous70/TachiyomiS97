@@ -18,8 +18,22 @@ class MangaRepositoryImpl(
         return handler.awaitOne { mangasQueries.getMangaById(id, mangaMapper) }
     }
 
+    override suspend fun subscribeMangaById(id: Long): Flow<Manga> {
+        return handler.subscribeToOne { mangasQueries.getMangaById(id, mangaMapper) }
+    }
+
+    override suspend fun getMangaByIdAsFlow(id: Long): Flow<Manga> {
+        return handler.subscribeToOne { mangasQueries.getMangaById(id, mangaMapper) }
+    }
+
     override fun getFavoritesBySourceId(sourceId: Long): Flow<List<Manga>> {
         return handler.subscribeToList { mangasQueries.getFavoriteBySourceId(sourceId, mangaMapper) }
+    }
+
+    override suspend fun getDuplicateLibraryManga(title: String, sourceId: Long): Manga? {
+        return handler.awaitOneOrNull {
+            mangasQueries.getDuplicateLibraryManga(title, sourceId, mangaMapper)
+        }
     }
 
     override suspend fun resetViewerFlags(): Boolean {
@@ -29,6 +43,15 @@ class MangaRepositoryImpl(
         } catch (e: Exception) {
             logcat(LogPriority.ERROR, e)
             false
+        }
+    }
+
+    override suspend fun moveMangaToCategories(mangaId: Long, categoryIds: List<Long>) {
+        handler.await(inTransaction = true) {
+            mangas_categoriesQueries.deleteMangaCategoryByMangaId(mangaId)
+            categoryIds.map { categoryId ->
+                mangas_categoriesQueries.insert(mangaId, categoryId)
+            }
         }
     }
 

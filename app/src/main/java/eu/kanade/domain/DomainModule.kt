@@ -1,9 +1,17 @@
 package eu.kanade.domain
 
+import eu.kanade.data.category.CategoryRepositoryImpl
 import eu.kanade.data.chapter.ChapterRepositoryImpl
 import eu.kanade.data.history.HistoryRepositoryImpl
 import eu.kanade.data.manga.MangaRepositoryImpl
 import eu.kanade.data.source.SourceRepositoryImpl
+import eu.kanade.data.track.TrackRepositoryImpl
+import eu.kanade.domain.category.interactor.DeleteCategory
+import eu.kanade.domain.category.interactor.GetCategories
+import eu.kanade.domain.category.interactor.InsertCategory
+import eu.kanade.domain.category.interactor.MoveMangaToCategories
+import eu.kanade.domain.category.interactor.UpdateCategory
+import eu.kanade.domain.category.repository.CategoryRepository
 import eu.kanade.domain.chapter.interactor.GetChapterByMangaId
 import eu.kanade.domain.chapter.interactor.ShouldUpdateDbChapter
 import eu.kanade.domain.chapter.interactor.SyncChaptersWithSource
@@ -20,9 +28,12 @@ import eu.kanade.domain.history.interactor.RemoveHistoryById
 import eu.kanade.domain.history.interactor.RemoveHistoryByMangaId
 import eu.kanade.domain.history.interactor.UpsertHistory
 import eu.kanade.domain.history.repository.HistoryRepository
+import eu.kanade.domain.manga.interactor.GetDuplicateLibraryManga
 import eu.kanade.domain.manga.interactor.GetFavoritesBySourceId
 import eu.kanade.domain.manga.interactor.GetMangaById
+import eu.kanade.domain.manga.interactor.GetMangaWithChapters
 import eu.kanade.domain.manga.interactor.ResetViewerFlags
+import eu.kanade.domain.manga.interactor.SetMangaChapterFlags
 import eu.kanade.domain.manga.interactor.UpdateManga
 import eu.kanade.domain.manga.repository.MangaRepository
 import eu.kanade.domain.source.interactor.GetEnabledSources
@@ -36,6 +47,9 @@ import eu.kanade.domain.source.interactor.ToggleSource
 import eu.kanade.domain.source.interactor.ToggleSourcePin
 import eu.kanade.domain.source.interactor.UpsertSourceData
 import eu.kanade.domain.source.repository.SourceRepository
+import eu.kanade.domain.track.interactor.GetTracks
+import eu.kanade.domain.track.interactor.InsertTrack
+import eu.kanade.domain.track.repository.TrackRepository
 import uy.kohesive.injekt.api.InjektModule
 import uy.kohesive.injekt.api.InjektRegistrar
 import uy.kohesive.injekt.api.addFactory
@@ -45,12 +59,26 @@ import uy.kohesive.injekt.api.get
 class DomainModule : InjektModule {
 
     override fun InjektRegistrar.registerInjectables() {
+        addSingletonFactory<CategoryRepository> { CategoryRepositoryImpl(get()) }
+        addFactory { GetCategories(get()) }
+        addFactory { InsertCategory(get()) }
+        addFactory { UpdateCategory(get()) }
+        addFactory { DeleteCategory(get()) }
+
         addSingletonFactory<MangaRepository> { MangaRepositoryImpl(get()) }
+        addFactory { GetDuplicateLibraryManga(get()) }
         addFactory { GetFavoritesBySourceId(get()) }
+        addFactory { GetMangaWithChapters(get(), get()) }
         addFactory { GetMangaById(get()) }
         addFactory { GetNextChapter(get()) }
         addFactory { ResetViewerFlags(get()) }
+        addFactory { SetMangaChapterFlags(get()) }
         addFactory { UpdateManga(get()) }
+        addFactory { MoveMangaToCategories(get()) }
+
+        addSingletonFactory<TrackRepository> { TrackRepositoryImpl(get()) }
+        addFactory { GetTracks(get()) }
+        addFactory { InsertTrack(get()) }
 
         addSingletonFactory<ChapterRepository> { ChapterRepositoryImpl(get()) }
         addFactory { GetChapterByMangaId(get()) }
