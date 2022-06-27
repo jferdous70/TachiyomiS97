@@ -86,6 +86,7 @@ import eu.kanade.tachiyomi.ui.migration.manga.design.PreMigrationController
 import eu.kanade.tachiyomi.ui.reader.ReaderActivity
 import eu.kanade.tachiyomi.ui.source.globalsearch.GlobalSearchController
 import eu.kanade.tachiyomi.util.isLocal
+import eu.kanade.tachiyomi.util.lang.toNormalized
 import eu.kanade.tachiyomi.util.moveCategories
 import eu.kanade.tachiyomi.util.system.dpToPx
 import eu.kanade.tachiyomi.util.system.getResourceColor
@@ -1278,7 +1279,7 @@ class LibraryController(
         if (query != this.query && !query.isNullOrBlank()) {
             binding.libraryGridRecycler.recycler.scrollToPosition(0)
         }
-        this.query = (query ?: "").replace("'", "’")
+        this.query = query?.toNormalized() ?: ""
         if (this.query.isNotBlank() && adapter.scrollableHeaders.isEmpty()) {
             searchItem.string = this.query
             adapter.addScrollableHeader(searchItem)
@@ -1290,7 +1291,7 @@ class LibraryController(
         } else if (this.query.isBlank() && adapter.scrollableHeaders.isNotEmpty()) {
             adapter.removeAllScrollableHeaders()
         }
-        adapter.setFilter(query)
+        adapter.setFilter(query?.toNormalized())
         if (presenter.allLibraryItems.isEmpty()) return true
         viewScope.launchUI {
             adapter.performFilterAsync()
