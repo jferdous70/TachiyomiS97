@@ -811,7 +811,8 @@ class MangaDetailsController :
             }
             return false
         }
-        openChapter(chapter, view)
+        // openChapter(chapter, view)
+        openChapter(chapter)
 
         return false
     }
@@ -1331,7 +1332,8 @@ class MangaDetailsController :
         }
         val item = presenter.getNextUnreadChapter()
         if (item != null) {
-            openChapter(item.chapter, readingButton)
+// 	        openChapter(item.chapter, readingButton)
+            openChapter(item.chapter)
         } else if (snack == null ||
             snack?.getText() != view?.context?.getString(R.string.next_chapter_not_found)
         ) {
