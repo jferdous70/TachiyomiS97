@@ -91,8 +91,9 @@ class LibraryPresenter(
         private set
     var allLibraryItems: List<LibraryItem> = emptyList()
         private set
+    var forceShowAllCategories = false
     val showAllCategories
-        get() = preferences.showAllCategories().get()
+        get() = forceShowAllCategories || preferences.showAllCategories().get()
 
     private val libraryIsGrouped
         get() = groupType != UNGROUPED
@@ -189,7 +190,7 @@ class LibraryPresenter(
         )
     }
 
-    private fun blankItem(id: Int = currentCategory): List<LibraryItem> {
+    fun blankItem(id: Int = currentCategory): List<LibraryItem> {
         return listOf(
             LibraryItem(
                 LibraryManga.createBlank(id),

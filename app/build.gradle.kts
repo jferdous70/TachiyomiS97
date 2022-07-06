@@ -52,15 +52,6 @@ android {
         ndk {
             abiFilters += supportedAbis
         }
-        packagingOptions {
-            jniLibs.excludes.addAll(
-                listOf(
-                    "**/libjxl.so",
-                    "**/libjxl_dec.so",
-                    "**/libjxl_threads.so",
-                )
-            )
-        }
         externalNativeBuild {
             cmake {
                 this.arguments("-DHAVE_LIBJXL=FALSE")
@@ -142,16 +133,16 @@ dependencies {
     // Android X libraries
     implementation("androidx.appcompat:appcompat:1.6.0-alpha03")
     implementation("androidx.cardview:cardview:1.0.0")
-    implementation("com.google.android.material:material:1.6.0")
+    implementation("com.google.android.material:material:1.7.0-alpha02")
     implementation("androidx.webkit:webkit:1.4.0")
     implementation("androidx.recyclerview:recyclerview:1.2.1")
     implementation("androidx.preference:preference:1.2.0")
-    implementation("androidx.annotation:annotation:1.3.0")
+    implementation("androidx.annotation:annotation:1.4.0")
     implementation("androidx.browser:browser:1.4.0")
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.palette:palette:1.0.0")
-    implementation("androidx.core:core-ktx:1.7.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.0-rc01")
+    implementation("androidx.core:core-ktx:1.8.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.0")
 
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
 

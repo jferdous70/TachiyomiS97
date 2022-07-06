@@ -1486,8 +1486,12 @@ class MangaDetailsController :
     }
 
     private fun showCategoriesSheet() {
-        presenter.manga.moveCategories(presenter.db, activity!!) {
+        val adding = !presenter.manga.favorite
+        presenter.manga.moveCategories(presenter.db, activity!!, adding) {
             updateHeader()
+            if (adding) {
+                showAddedSnack()
+            }
         }
     }
 
