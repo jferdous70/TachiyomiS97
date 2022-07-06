@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="manga">Манкӑ</string>
-    <string name="app_short_name" translatable="false">TachiS97</string>
+    <string name="app_short_name" translatable="false">TachiyomiS97</string>
     <string name="app_name" translatable="false">TachiyomiS97</string>
     <string name="webtoon">Тетел кумӑкс</string>
     <string name="author">Авттӑр</string>

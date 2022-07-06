@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name" translatable="false">TachiyomiS97</string>
-    <string name="app_short_name" translatable="false">TachiS97</string>
+    <string name="app_short_name" translatable="false">TachiyomiS97</string>
     <!--Models-->
     <!-- Manga Type -->
     <string name="manga">Manga</string>

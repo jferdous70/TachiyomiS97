@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name" translatable="false">TachiyomiS97</string>
-    <string name="app_short_name" translatable="false">TachiS97</string>
+    <string name="app_short_name" translatable="false">TachiyomiS97</string>
     <!--Models-->
     <!-- Manga Type -->
     <string name="manga">Mangás</string>
@@ -200,7 +200,7 @@
     <string name="version_">Versão: %1$s</string>
     <string name="language_">Idioma: %1$s</string>
     <plurals name="extension_updates_available">
-        <item quantity="one">Atualização de extensão disponível</item>
+        <item quantity="one">%d atualizações de extensão disponíveis</item>
         <item quantity="other">%d atualizações de extensão disponíveis</item>
     </plurals>
     <!-- Reader -->
@@ -892,7 +892,7 @@
     <string name="split_double_pages">Dividir em página dupla</string>
     <string name="split_double_pages_portrait">Dividir página dupla em retrato</string>
     <plurals name="extensions_updated_plural">
-        <item quantity="one">Extensão atualizada</item>
+        <item quantity="one">%d extensões atualizadas</item>
         <item quantity="other">%d extensões atualizadas</item>
     </plurals>
     <string name="extensions_updated">Extensões atualizadas</string>
@@ -1023,7 +1023,7 @@
     <string name="backup_info">Backups automáticos são altamente recomendados. Você deve manter cópias em outros locais também.</string>
     <string name="download_ahead">Download antecipado</string>
     <plurals name="next_unread_chapters">
-        <item quantity="one">Próximo capítulo não lido</item>
+        <item quantity="one">Próximos %d capítulos não lidos</item>
         <item quantity="other">Próximos %d capítulos não lidos</item>
     </plurals>
     <string name="auto_download_after_reading">Baixa os próximos capítulos não lidos após a leitura</string>
