@@ -12,9 +12,8 @@ New features only in this fork include:
 * Up to 4x times faster Chapter Downloads
 * Implemented read progress sync cross-devices
 * Silenced mass download and mass update warnings
-* Allowed to simultaneously update library and download chapters
 * Auto download next unread chapters while reading
-* Added force bypass for cloudflare failures
+* Added force bypass for cloudflare failures [Experimental]
 * Added more back up intervals and increased max number of backups
 
 ## Features
@@ -23,7 +22,7 @@ Features of Tachiyomi include:
 * Online reading from a variety of sources
 * Local reading of downloaded content
 * A configurable reader with multiple viewers, reading directions and other settings.
-* [MyAnimeList](https://myanimelist.net/), [AniList](https://anilist.co/), [Kitsu](https://kitsu.io/explore/anime), and [Shikimori](https://shikimori.one) support
+* [MyAnimeList](https://myanimelist.net/), [AniList](https://anilist.co/), [Kitsu](https://kitsu.io/explore/anime), [Shikimori](https://shikimori.one), and [Manga Updates](https://www.mangaupdates.com/) support
 * Categories to organize your library
 * Automatic light and dark themes
 * Schedule updating your library for new chapters
