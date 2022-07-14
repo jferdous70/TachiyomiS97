@@ -10,7 +10,7 @@ New features only in this fork include:
 * Up to 6x times faster Global Searches
 * Up to 5x times faster Global Updates
 * Up to 4x times faster Chapter Downloads
-* Implemented read progress sync cross-devices
+* Implemented read progress sync cross-devices via tracking
 * Silenced mass download and mass update warnings
 * Auto download next unread chapters while reading
 * Added force bypass for cloudflare failures [Experimental]
