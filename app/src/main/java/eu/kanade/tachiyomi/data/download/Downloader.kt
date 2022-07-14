@@ -5,7 +5,6 @@ import android.content.Intent
 import android.os.Build
 import android.os.Environment
 import android.provider.Settings
-import android.webkit.MimeTypeMap
 import androidx.core.net.toUri
 import com.hippo.unifile.UniFile
 import com.jakewharton.rxrelay.BehaviorRelay
@@ -521,7 +520,7 @@ class Downloader(
             // Else read magic numbers.
             ?: ImageUtil.findImageType { file.openInputStream() }?.mime
 
-        return MimeTypeMap.getSingleton().getExtensionFromMimeType(mime) ?: "jpg"
+        return ImageUtil.getExtensionFromMimeType(mime)
     }
 
     private fun splitTallImageIfNeeded(page: Page, tmpDir: UniFile): Boolean {
@@ -536,7 +535,12 @@ class Downloader(
         // check if the original page was previously split before then skip.
         if (imageFile.name!!.contains("__")) return true
 
-        return ImageUtil.splitTallImage(imageFile, imageFilePath)
+        return try {
+            ImageUtil.splitTallImage(imageFile, imageFilePath)
+        } catch (e: Exception) {
+            Timber.e(e)
+            false
+        }
     }
 
     /**

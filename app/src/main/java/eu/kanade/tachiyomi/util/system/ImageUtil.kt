@@ -14,7 +14,12 @@ import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
+import android.webkit.MimeTypeMap
 import androidx.annotation.ColorInt
+import androidx.core.graphics.alpha
+import androidx.core.graphics.blue
+import androidx.core.graphics.green
+import androidx.core.graphics.red
 import com.hippo.unifile.UniFile
 import eu.kanade.tachiyomi.R
 import tachiyomi.decoder.Format
@@ -72,6 +77,12 @@ object ImageUtil {
         }
         return if (bitmapResized != null) BitmapDrawable(resources, bitmapResized)
         else null
+    }
+
+    fun getExtensionFromMimeType(mime: String?): String {
+        return MimeTypeMap.getSingleton().getExtensionFromMimeType(mime)
+            ?: SUPPLEMENTARY_MIMETYPE_MAPPING[mime]
+            ?: "jpg"
     }
 
     fun isAnimatedAndSupported(stream: InputStream): Boolean {
@@ -132,31 +143,31 @@ object ImageUtil {
         val midX = image.width / 2
         val midY = image.height / 2
         val offsetX = (image.width * 0.01).toInt()
-        val topLeftIsDark = isDark(image.getPixel(left, top))
-        val topRightIsDark = isDark(image.getPixel(right, top))
-        val midLeftIsDark = isDark(image.getPixel(left, midY))
-        val midRightIsDark = isDark(image.getPixel(right, midY))
-        val topMidIsDark = isDark(image.getPixel(midX, top))
-        val botLeftIsDark = isDark(image.getPixel(left, bot))
-        val botRightIsDark = isDark(image.getPixel(right, bot))
+        val topLeftIsDark = image.getPixel(left, top).isDark
+        val topRightIsDark = image.getPixel(right, top).isDark
+        val midLeftIsDark = image.getPixel(left, midY).isDark
+        val midRightIsDark = image.getPixel(right, midY).isDark
+        val topMidIsDark = image.getPixel(midX, top).isDark
+        val botLeftIsDark = image.getPixel(left, bot).isDark
+        val botRightIsDark = image.getPixel(right, bot).isDark
 
         var darkBG = (topLeftIsDark && (botLeftIsDark || botRightIsDark || topRightIsDark || midLeftIsDark || topMidIsDark)) ||
             (topRightIsDark && (botRightIsDark || botLeftIsDark || midRightIsDark || topMidIsDark))
 
-        if (!isWhite(image.getPixel(left, top)) && pixelIsClose(image.getPixel(left, top), image.getPixel(midX, top)) &&
-            !isWhite(image.getPixel(midX, top)) && pixelIsClose(image.getPixel(midX, top), image.getPixel(right, top)) &&
-            !isWhite(image.getPixel(right, top)) && pixelIsClose(image.getPixel(right, top), image.getPixel(right, bot)) &&
-            !isWhite(image.getPixel(right, bot)) && pixelIsClose(image.getPixel(right, bot), image.getPixel(midX, bot)) &&
-            !isWhite(image.getPixel(midX, bot)) && pixelIsClose(image.getPixel(midX, bot), image.getPixel(left, bot)) &&
-            !isWhite(image.getPixel(left, bot)) && pixelIsClose(image.getPixel(left, bot), image.getPixel(left, top))
+        if (!image.getPixel(left, top).isWhite && pixelIsClose(image.getPixel(left, top), image.getPixel(midX, top)) &&
+            !image.getPixel(right, top).isWhite && pixelIsClose(image.getPixel(right, top), image.getPixel(right, bot)) &&
+            !image.getPixel(right, bot).isWhite && pixelIsClose(image.getPixel(right, bot), image.getPixel(midX, bot)) &&
+            !image.getPixel(midX, top).isWhite && pixelIsClose(image.getPixel(midX, top), image.getPixel(right, top)) &&
+            !image.getPixel(midX, bot).isWhite && pixelIsClose(image.getPixel(midX, bot), image.getPixel(left, bot)) &&
+            !image.getPixel(left, bot).isWhite && pixelIsClose(image.getPixel(left, bot), image.getPixel(left, top))
         ) {
             return ColorDrawable(image.getPixel(left, top))
         }
 
-        if (isWhite(image.getPixel(left, top)).toInt() +
-            isWhite(image.getPixel(right, top)).toInt() +
-            isWhite(image.getPixel(left, bot)).toInt() +
-            isWhite(image.getPixel(right, bot)).toInt() > 2
+        if (image.getPixel(left, top).isWhite.toInt() +
+            image.getPixel(right, top).isWhite.toInt() +
+            image.getPixel(left, bot).isWhite.toInt() +
+            image.getPixel(right, bot).isWhite.toInt() > 2
         ) {
             darkBG = false
         }
@@ -186,7 +197,7 @@ object ImageUtil {
             for ((index, y) in (0 until image.height step image.height / 25).withIndex()) {
                 val pixel = image.getPixel(x, y)
                 val pixelOff = image.getPixel(x + (if (x < image.width / 2) -offsetX else offsetX), y)
-                if (isWhite(pixel)) {
+                if (pixel.isWhite) {
                     whitePixelsStreak++
                     whitePixels++
                     if (notOffset) {
@@ -200,7 +211,7 @@ object ImageUtil {
                     }
                 } else {
                     whitePixelsStreak = 0
-                    if (isDark(pixel) && isDark(pixelOff)) {
+                    if (pixel.isDark && pixelOff.isDark) {
                         blackPixels++
                         if (notOffset) {
                             overallBlackPixels++
@@ -263,11 +274,11 @@ object ImageUtil {
         }
         val isLandscape = context.resources.configuration?.orientation == Configuration.ORIENTATION_LANDSCAPE
         if (darkBG) {
-            return if (!isLandscape && isWhite(image.getPixel(left, bot)) && isWhite(image.getPixel(right, bot))) GradientDrawable(
+            return if (!isLandscape && image.getPixel(left, bot).isWhite && image.getPixel(right, bot).isWhite) GradientDrawable(
                 GradientDrawable.Orientation.TOP_BOTTOM,
                 intArrayOf(blackPixel, blackPixel, backgroundColor, backgroundColor),
             )
-            else if (!isLandscape && isWhite(image.getPixel(left, top)) && isWhite(image.getPixel(right, top))) GradientDrawable(
+            else if (!isLandscape && image.getPixel(left, top).isWhite && image.getPixel(right, top).isWhite) GradientDrawable(
                 GradientDrawable.Orientation.TOP_BOTTOM,
                 intArrayOf(backgroundColor, backgroundColor, blackPixel, blackPixel),
             )
@@ -276,7 +287,7 @@ object ImageUtil {
         if (!isLandscape && (
             topIsBlackStreak || (
                 topLeftIsDark && topRightIsDark &&
-                    isDark(image.getPixel(left - offsetX, top)) && isDark(image.getPixel(right + offsetX, top)) &&
+                    image.getPixel(left - offsetX, top).isDark && image.getPixel(right + offsetX, top).isDark &&
                     (topMidIsDark || overallBlackPixels > 9)
                 )
             )
@@ -288,8 +299,8 @@ object ImageUtil {
         } else if (!isLandscape && (
             bottomIsBlackStreak || (
                 botLeftIsDark && botRightIsDark &&
-                    isDark(image.getPixel(left - offsetX, bot)) && isDark(image.getPixel(right + offsetX, bot)) &&
-                    (isDark(image.getPixel(midX, bot)) || overallBlackPixels > 9)
+                    image.getPixel(left - offsetX, bot).isDark && image.getPixel(right + offsetX, bot).isDark &&
+                    (image.getPixel(midX, bot).isDark || overallBlackPixels > 9)
                 )
             )
         ) {
@@ -460,16 +471,34 @@ object ImageUtil {
             return true
         }
 
-        val options = extractImageOptions(imageFile.openInputStream(), false).apply { inJustDecodeBounds = false }
+        val options = extractImageOptions(imageFile.openInputStream(), resetAfterExtraction = false).apply { inJustDecodeBounds = false }
         // Values are stored as they get modified during split loop
         val imageHeight = options.outHeight
         val imageWidth = options.outWidth
 
-        val splitHeight = displayMaxHeightInPx
-        // -1 so it doesn't try to split when imageHeight = displayMaxHeightInPx
+        val splitHeight = (displayMaxHeightInPx * 1.5).toInt()
+        // -1 so it doesn't try to split when imageHeight = getDisplayHeightInPx
         val partCount = (imageHeight - 1) / splitHeight + 1
 
-        Timber.d("Splitting ${imageHeight}px height image into $partCount part with estimated ${splitHeight}px per height")
+        val optimalSplitHeight = imageHeight / partCount
+
+        val splitDataList = (0 until partCount).fold(mutableListOf<SplitData>()) { list, index ->
+            list.apply {
+                // Only continue if the list is empty or there is image remaining
+                if (isEmpty() || imageHeight > last().bottomOffset) {
+                    val topOffset = index * optimalSplitHeight
+                    var outputImageHeight = min(optimalSplitHeight, imageHeight - topOffset)
+
+                    val remainingHeight = imageHeight - (topOffset + outputImageHeight)
+                    // If remaining height is smaller or equal to 1/3th of
+                    // optimal split height then include it in current page
+                    if (remainingHeight <= (optimalSplitHeight / 3)) {
+                        outputImageHeight += remainingHeight
+                    }
+                    add(SplitData(index, topOffset, outputImageHeight))
+                }
+            }
+        }
 
         val bitmapRegionDecoder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             BitmapRegionDecoder.newInstance(imageFile.openInputStream())
@@ -483,73 +512,64 @@ object ImageUtil {
             return false
         }
 
-        try {
-            (0 until partCount).forEach { splitIndex ->
-                val splitPath = imageFilePath.substringBeforeLast(".") + "__${"%03d".format(splitIndex + 1)}.jpg"
+        Timber.d(
+            "Splitting image with height of $imageHeight into $partCount part with estimated ${optimalSplitHeight}px height per split",
+        )
 
-                val topOffset = splitIndex * splitHeight
-                val outputImageHeight = min(splitHeight, imageHeight - topOffset)
-                val bottomOffset = topOffset + outputImageHeight
-                Timber.d("Split #$splitIndex with topOffset=$topOffset height=$outputImageHeight bottomOffset=$bottomOffset")
+        return try {
+            splitDataList.forEach { splitData ->
+                val splitPath = splitImagePath(imageFilePath, splitData.index)
 
-                val region = Rect(0, topOffset, imageWidth, bottomOffset)
+                val region = Rect(0, splitData.topOffset, imageWidth, splitData.bottomOffset)
 
                 FileOutputStream(splitPath).use { outputStream ->
                     val splitBitmap = bitmapRegionDecoder.decodeRegion(region, options)
                     splitBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+                    splitBitmap.recycle()
                 }
+                Timber.d(
+                    "Success: Split #${splitData.index + 1} with topOffset=${splitData.topOffset} height=${splitData.outputImageHeight} bottomOffset=${splitData.bottomOffset}",
+                )
             }
             imageFile.delete()
-            return true
+            true
         } catch (e: Exception) {
             // Image splits were not successfully saved so delete them and keep the original image
-            (0 until partCount)
-                .map { imageFilePath.substringBeforeLast(".") + "__${"%03d".format(it + 1)}.jpg" }
+            splitDataList
+                .map { splitImagePath(imageFilePath, it.index) }
                 .forEach { File(it).delete() }
             Timber.e(e)
-            return false
+            false
         } finally {
             bitmapRegionDecoder.recycle()
         }
     }
 
+    private fun splitImagePath(imageFilePath: String, index: Int) =
+        imageFilePath.substringBeforeLast(".") + "__${"%03d".format(index + 1)}.jpg"
+
+    data class SplitData(
+        val index: Int,
+        val topOffset: Int,
+        val outputImageHeight: Int,
+    ) {
+        val bottomOffset = topOffset + outputImageHeight
+    }
+
     private val Bitmap.rect: Rect
         get() = Rect(0, 0, width, height)
 
-    private fun isDark(color: Int): Boolean {
-        return Color.red(color) < 40 && Color.blue(color) < 40 && Color.green(color) < 40 &&
-            Color.alpha(color) > 200
-    }
-
-    fun isDarkish(color: Int): Boolean {
-        return Color.red(color) < 80 && Color.blue(color) < 80 && Color.green(color) < 80 &&
-            Color.alpha(color) > 150
-    }
-
     private fun pixelIsClose(color1: Int, color2: Int): Boolean {
-        return abs(Color.red(color1) - Color.red(color2)) < 30 &&
-            abs(Color.green(color1) - Color.green(color2)) < 30 &&
-            abs(Color.blue(color1) - Color.blue(color2)) < 30
+        return abs(color1.red - color2.red) < 30 &&
+            abs(color1.green - color2.green) < 30 &&
+            abs(color1.blue - color2.blue) < 30
     }
 
-    private fun isWhite(color: Int): Boolean {
-        return Color.red(color) + Color.blue(color) + Color.green(color) > 740
-    }
+    private val Int.isWhite: Boolean
+        get() = red + blue + green > 740
 
-    private fun ByteArray.compareWith(magic: ByteArray): Boolean {
-        for (i in magic.indices) {
-            if (this[i] != magic[i]) return false
-        }
-        return true
-    }
-
-    private fun charByteArrayOf(vararg bytes: Int): ByteArray {
-        return ByteArray(bytes.size).apply {
-            for (i in bytes.indices) {
-                set(i, bytes[i].toByte())
-            }
-        }
-    }
+    private val Int.isDark: Boolean
+        get() = red < 40 && blue < 40 && green < 40 && alpha > 200
 
     fun getPercentOfColor(
         @ColorInt color: Int,
@@ -587,4 +607,10 @@ object ImageUtil {
         if (resetAfterExtraction) imageStream.reset()
         return options
     }
+
+    // Android doesn't include some mappings
+    private val SUPPLEMENTARY_MIMETYPE_MAPPING = mapOf(
+        // https://issuetracker.google.com/issues/182703810
+        "image/jxl" to "jxl",
+    )
 }

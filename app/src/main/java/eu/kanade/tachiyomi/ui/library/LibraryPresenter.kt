@@ -20,6 +20,7 @@ import eu.kanade.tachiyomi.source.SourceManager
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.ui.base.presenter.BaseCoroutinePresenter
+import eu.kanade.tachiyomi.ui.library.LibraryGroup.BY_AUTHOR
 import eu.kanade.tachiyomi.ui.library.LibraryGroup.BY_DEFAULT
 import eu.kanade.tachiyomi.ui.library.LibraryGroup.BY_SOURCE
 import eu.kanade.tachiyomi.ui.library.LibraryGroup.BY_TAG
@@ -91,6 +92,7 @@ class LibraryPresenter(
         private set
     var allLibraryItems: List<LibraryItem> = emptyList()
         private set
+    private var hiddenLibraryItems: List<LibraryItem> = emptyList()
     var forceShowAllCategories = false
     val showAllCategories
         get() = forceShowAllCategories || preferences.showAllCategories().get()
@@ -158,13 +160,15 @@ class LibraryPresenter(
             categories = lastCategories ?: db.getCategories().executeAsBlocking().toMutableList()
         }
         presenterScope.launch {
-            val library = withContext(Dispatchers.IO) { getLibraryFromDB() }
-            library.apply {
-                setDownloadCount(library)
-                setUnreadBadge(library)
-                setSourceLanguage(library)
-            }
+            val (library, hiddenItems) = withContext(Dispatchers.IO) { getLibraryFromDB() }
+            setDownloadCount(library)
+            setUnreadBadge(library)
+            setSourceLanguage(library)
+            setDownloadCount(hiddenItems)
+            setUnreadBadge(hiddenItems)
+            setSourceLanguage(hiddenItems)
             allLibraryItems = library
+            hiddenLibraryItems = hiddenItems
             var mangaMap = library
             mangaMap = applyFilters(mangaMap)
             mangaMap = applySort(mangaMap)
@@ -263,7 +267,8 @@ class LibraryPresenter(
         val missingCategorySet = categories.mapNotNull { it.id }.toMutableSet()
         val filteredItems = items.filter f@{ item ->
             if (!showEmptyCategoriesWhileFiltering && item.manga.isHidden()) {
-                val subItems = sectionedLibraryItems[item.manga.category]
+                val subItems = sectionedLibraryItems[item.manga.category]?.takeUnless { it.size <= 1 }
+                    ?: hiddenLibraryItems.filter { it.manga.category == item.manga.category }
                 if (subItems.isNullOrEmpty()) return@f filtersOff
                 else {
                     return@f subItems.any {
@@ -545,7 +550,7 @@ class LibraryPresenter(
      *
      * @return an list of all the manga in a itemized form.
      */
-    private fun getLibraryFromDB(): List<LibraryItem> {
+    private fun getLibraryFromDB(): Pair<List<LibraryItem>, List<LibraryItem>> {
         removeArticles = preferences.removeArticles().get()
         val categories = db.getCategories().executeAsBlocking().toMutableList()
         var libraryManga = db.getLibraryMangas().executeAsBlocking()
@@ -553,6 +558,7 @@ class LibraryPresenter(
         if (groupType > BY_DEFAULT) {
             libraryManga = libraryManga.distinctBy { it.id }
         }
+        val hiddenItems = mutableListOf<LibraryItem>()
 
         val items = if (groupType <= BY_DEFAULT || !libraryIsGrouped) {
             val categoryAll = Category.createAll(
@@ -579,18 +585,18 @@ class LibraryPresenter(
                 LibraryItem(it, headerItem)
             }.toMutableList()
 
-            val categoriesHidden = preferences.collapsedCategories().get().mapNotNull {
-                it.toIntOrNull()
-            }.toMutableSet()
+            val categoriesHidden = if (forceShowAllCategories) {
+                emptySet()
+            } else {
+                preferences.collapsedCategories().get().mapNotNull { it.toIntOrNull() }.toSet()
+            }
 
             if (categorySet.contains(0)) categories.add(0, createDefaultCategory())
             if (libraryIsGrouped) {
                 categories.forEach { category ->
                     val catId = category.id ?: return@forEach
-                    if (catId > 0 && !categorySet.contains(catId) && (
-                        catId !in categoriesHidden ||
-                            !showAll
-                        )
+                    if (catId > 0 && !categorySet.contains(catId) &&
+                        (catId !in categoriesHidden || !showAll)
                     ) {
                         val headerItem = headerItems[catId]
                         if (headerItem != null) items.add(
@@ -602,6 +608,7 @@ class LibraryPresenter(
                             it.manga.title + "-" + it.manga.author
                         }
                         sectionedLibraryItems[catId] = mangaToRemove
+                        hiddenItems.addAll(mangaToRemove)
                         items.removeAll(mangaToRemove)
                         val headerItem = headerItems[catId]
                         if (headerItem != null) items.add(
@@ -629,7 +636,7 @@ class LibraryPresenter(
 
         this.allCategories = categories
 
-        return items
+        return items to hiddenItems
     }
 
     private fun getCustomMangaItems(libraryManga: List<LibraryManga>): Pair<List<LibraryItem>,
@@ -637,26 +644,33 @@ class LibraryPresenter(
         val tagItems: MutableMap<String, LibraryHeaderItem> = mutableMapOf()
 
         // internal function to make headers
-        fun makeOrGetHeader(name: String): LibraryHeaderItem {
+        fun makeOrGetHeader(name: String, checkNameSwap: Boolean = false): LibraryHeaderItem {
             return if (tagItems.containsKey(name)) {
                 tagItems[name]!!
             } else {
+                if (checkNameSwap && name.contains(" ")) {
+                    val swappedName = name.split(" ").reversed().joinToString(" ")
+                    if (tagItems.containsKey(swappedName)) {
+                        return tagItems[swappedName]!!
+                    }
+                }
                 val headerItem = LibraryHeaderItem({ getCategory(it) }, tagItems.count())
                 tagItems[name] = headerItem
                 headerItem
             }
         }
 
+        val unknown = context.getString(R.string.unknown)
         val items = libraryManga.map { manga ->
             when (groupType) {
                 BY_TAG -> {
                     val tags = if (manga.genre.isNullOrBlank()) {
-                        listOf("Unknown")
+                        listOf(unknown)
                     } else {
                         manga.genre?.split(",")?.mapNotNull {
                             val tag = it.trim().capitalizeWords()
-                            if (tag.isBlank()) null else tag
-                        } ?: listOf("Unknown")
+                            tag.ifBlank { null }
+                        } ?: listOf(unknown)
                     }
                     tags.map {
                         LibraryItem(manga, makeOrGetHeader(it))
@@ -688,6 +702,23 @@ class LibraryPresenter(
                         ),
                     )
                 }
+                BY_AUTHOR -> {
+                    if (manga.artist.isNullOrBlank() && manga.author.isNullOrBlank()) {
+                        listOf(LibraryItem(manga, makeOrGetHeader(unknown)))
+                    } else {
+                        listOfNotNull(
+                            manga.author.takeUnless { it.isNullOrBlank() },
+                            manga.artist.takeUnless { it.isNullOrBlank() },
+                        ).map {
+                            it.split(",", "/", " x ", " - ", ignoreCase = true).mapNotNull { name ->
+                                val author = name.trim()
+                                author.ifBlank { null }
+                            }
+                        }.flatten().distinct().map {
+                            LibraryItem(manga, makeOrGetHeader(it, true))
+                        }
+                    }
+                }
                 else -> listOf(LibraryItem(manga, makeOrGetHeader(mapStatus(manga.status))))
             }
         }.flatten().toMutableList()
@@ -707,13 +738,15 @@ class LibraryPresenter(
                 }
                 isHidden = getDynamicCategoryName(this) in hiddenDynamics
             }
-        }.sortedBy {
-            if (groupType == BY_TRACK_STATUS) {
-                mapTrackingOrder(it.name)
-            } else {
-                it.name
-            }
-        }
+        }.sortedWith(
+            compareBy(String.CASE_INSENSITIVE_ORDER) {
+                if (groupType == BY_TRACK_STATUS) {
+                    mapTrackingOrder(it.name)
+                } else {
+                    it.name
+                }
+            },
+        )
         if (preferences.collapsedDynamicAtBottom().get()) {
             headers = headers.filterNot { it.isHidden } + headers.filter { it.isHidden }
         }

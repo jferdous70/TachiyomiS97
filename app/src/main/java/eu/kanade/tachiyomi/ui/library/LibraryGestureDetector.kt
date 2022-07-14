@@ -23,14 +23,10 @@ class LibraryGestureDetector(private val controller: LibraryController) : Gestur
         distanceX: Float,
         distanceY: Float,
     ): Boolean {
-        val distance = ((e1?.rawX ?: 0f) - (e2?.rawX ?: 0f)) / 50
+        val distance = (e1.rawX - e2.rawX) / 50
         val poa = 1.7f
         controller.binding.categoryHopperFrame.translationX = abs(distance).pow(poa) * -sign(distance)
         return super.onScroll(e1, e2, distanceX, distanceY)
-    }
-
-    override fun onSingleTapUp(e: MotionEvent): Boolean {
-        return super.onSingleTapUp(e)
     }
 
     @SuppressLint("RtlHardcoded")
@@ -60,7 +56,8 @@ class LibraryGestureDetector(private val controller: LibraryController) : Gestur
             }
         } else if (abs(diffX) >= abs(diffY) &&
             abs(diffX) > SWIPE_THRESHOLD * 5 &&
-            abs(velocityX) > SWIPE_VELOCITY_THRESHOLD
+            abs(velocityX) > SWIPE_VELOCITY_THRESHOLD &&
+            sign(diffX) == sign(velocityX)
         ) {
             val hopperGravity = (controller.binding.categoryHopperFrame.layoutParams as CoordinatorLayout.LayoutParams).gravity
             if (diffX <= 0) {
