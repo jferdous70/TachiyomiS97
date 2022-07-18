@@ -2,12 +2,17 @@ package eu.kanade.tachiyomi.ui.download
 
 import android.app.Activity
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.util.AttributeSet
 import android.view.MenuItem
 import android.widget.LinearLayout
+import android.widget.Toast
+import androidx.core.content.edit
 import androidx.core.view.WindowInsetsCompat.Type.systemBars
 import androidx.core.view.isInvisible
 import androidx.core.view.updateLayoutParams
+import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -15,6 +20,7 @@ import eu.davidea.flexibleadapter.FlexibleAdapter
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.download.DownloadService
 import eu.kanade.tachiyomi.data.download.model.Download
+import eu.kanade.tachiyomi.data.preference.PreferenceKeys
 import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.databinding.DownloadBottomSheetBinding
 import eu.kanade.tachiyomi.ui.extension.ExtensionDividerItemDecoration
@@ -219,6 +225,9 @@ class DownloadBottomSheet @JvmOverloads constructor(
 
         // Set reorder button visibility.
         menu.findItem(R.id.reorder)?.isVisible = !presenter.downloadQueue.isEmpty()
+
+        // Set force_bypass_cloudflare button visibility.
+        menu.findItem(R.id.force_bypass_cloudflare)?.isVisible = !presenter.downloadQueue.isEmpty()
     }
 
     private fun updateFab() {
@@ -238,6 +247,17 @@ class DownloadBottomSheet @JvmOverloads constructor(
             }
             R.id.asc, R.id.desc -> {
                 reorderQueue({ it.download.chapter.chapter_number }, item.itemId == R.id.desc)
+            }
+            R.id.force_bypass_cloudflare -> {
+                val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+                val forceBypassCloudflare = prefs.getBoolean(PreferenceKeys.forceBypassCloudflare, true)
+                prefs.edit {
+                    putBoolean(PreferenceKeys.forceBypassCloudflare, !forceBypassCloudflare)
+                }
+                val msg = "${context.getString(R.string.force_bypass_cloudflare)}: ${if (!forceBypassCloudflare) context.getString(R.string.enabled) else context.getString(R.string.disabled)}"
+                Handler(Looper.getMainLooper()).post {
+                    Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+                }
             }
         }
         return true

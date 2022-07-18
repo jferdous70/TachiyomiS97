@@ -78,21 +78,23 @@ class CloudflareInterceptor(private val context: Context) : Interceptor {
             networkHelper.cookieManager.remove(originalRequest.url, COOKIE_NAMES, 0)
             val oldCookie = networkHelper.cookieManager.get(originalRequest.url)
                 .firstOrNull { it.name == "cf_clearance" }
-			
+
             if (preferences.forceBypassCloudflare()) {
                 for (i in 1..10) {
-                    try {
-                        resolveWithWebView(originalRequest, oldCookie)
-                        break
-                    } catch (e: CloudflareBypassException) {
-                        // clearwebviewdata
-                        context.applicationInfo?.dataDir?.let { File("$it/app_webview/").deleteRecursively() }
-                        val msg = "Trying to force bypass cloudflare. Attempt: $i"
-                        Handler(Looper.getMainLooper()).post {
-                            Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
-                        }
-                        if (i == 10) {
-                            throw e
+                    if (preferences.forceBypassCloudflare()) {
+                        try {
+                            resolveWithWebView(originalRequest, oldCookie)
+                            break
+                        } catch (e: CloudflareBypassException) {
+                            // clearwebviewdata
+                            context.applicationInfo?.dataDir?.let { File("$it/app_webview/").deleteRecursively() }
+                            val msg = "Trying to force bypass cloudflare. Attempt: $i"
+                            Handler(Looper.getMainLooper()).post {
+                                Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+                            }
+                            if (i == 10) {
+                                throw e
+                            }
                         }
                     }
                 }
@@ -124,7 +126,8 @@ class CloudflareInterceptor(private val context: Context) : Interceptor {
         var isWebViewOutdated = false
 
         val origRequestUrl = request.url.toString()
-        val headers = request.headers.toMultimap().mapValues { it.value.getOrNull(0) ?: "" }.toMutableMap()
+        val headers =
+            request.headers.toMultimap().mapValues { it.value.getOrNull(0) ?: "" }.toMutableMap()
 
         executor.execute {
             val webview = WebView(context)

@@ -43,4 +43,9 @@
         android:visible="false"
         app:showAsAction="never"/>
 
+    <item android:title="@string/toggle_force_bypass_cloudflare"
+        android:id="@+id/force_bypass_cloudflare"
+        android:visible="false"
+        app:showAsAction="never"/>
+
 </menu>

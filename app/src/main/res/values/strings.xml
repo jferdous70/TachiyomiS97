@@ -813,6 +813,7 @@
     <string name="ad_guard" translatable="false">AdGuard</string>
     <string name="quad9" translatable="false">Quad9</string>
     <string name="force_bypass_cloudflare">Attempt to force bypass cloudflare errors</string>
+    <string name="toggle_force_bypass_cloudflare">Toggle cloudflare bypasser</string>
     <string name="requires_app_restart">Requires app restart to take effect</string>
     <string name="used_">Used: %1$s</string>
     <plurals name="cache_cleared">
