@@ -1111,9 +1111,12 @@ class LibraryPresenter(
                 mangaList.forEach { manga ->
                     val chaptersDB = db.getChapters(manga).executeAsBlocking().sortedBy { it.chapter_number }
                     val chapters = chaptersDB.filter { !it.read }.toMutableList()
-                    val firstChapter = chapters.first()
-                    chapters.addAll(0, chaptersDB.filter { abs(it.chapter_number - firstChapter.chapter_number) <= 2 })
-
+                    if (chapters.isEmpty() && chaptersDB.count() >= 2) {
+                        chapters.addAll(0, chaptersDB.takeLast(2))
+                    } else {
+                        val firstChapter = chapters.first()
+                        chapters.addAll(0, chaptersDB.filter { abs(it.chapter_number - firstChapter.chapter_number) <= 2 })
+                    }
                     downloadManager.downloadChapters(manga, chapters.distinct())
                 }
             }

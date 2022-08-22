@@ -124,6 +124,7 @@ import uy.kohesive.injekt.api.get
 import java.io.File
 import java.io.IOException
 import java.util.Locale
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.roundToInt
 
@@ -1247,7 +1248,17 @@ class MangaDetailsController :
                 rangeMode = RangeMode.Download
                 return
             }
-            R.id.download_unread -> presenter.allChapters.filter { !it.read }
+            R.id.download_unread -> {
+                val chaptersDB = presenter.allChapters.sortedBy { it.chapter_number }
+                val chapters = chaptersDB.filter { !it.read }.toMutableList()
+                if (chapters.isEmpty() && chaptersDB.count() >= 2) {
+                    chapters.addAll(0, chaptersDB.takeLast(2))
+                } else {
+                    val firstChapter = chapters.first()
+                    chapters.addAll(0, chaptersDB.filter { abs(it.chapter_number - firstChapter.chapter_number) <= 2 })
+                }
+                chapters.distinct()
+            }
             R.id.download_all -> presenter.allChapters
             else -> emptyList()
         }
