@@ -225,10 +225,10 @@ class Downloader(
                         { download ->
                             downloadChapter(download).subscribeOn(Schedulers.io())
                         },
-                        4,
+                        3,
                     )
                 },
-                500,
+                10,
             )
             .onBackpressureLatest()
             .observeOn(AndroidSchedulers.mainThread())
