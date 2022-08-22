@@ -19,11 +19,9 @@ import com.hippo.unifile.UniFile
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.backup.BackupConst
 import eu.kanade.tachiyomi.data.backup.BackupCreatorJob
+import eu.kanade.tachiyomi.data.backup.BackupFileValidator
 import eu.kanade.tachiyomi.data.backup.BackupRestoreService
-import eu.kanade.tachiyomi.data.backup.ValidatorParseException
-import eu.kanade.tachiyomi.data.backup.full.FullBackupRestoreValidator
-import eu.kanade.tachiyomi.data.backup.full.models.BackupFull
-import eu.kanade.tachiyomi.data.backup.legacy.LegacyBackupRestoreValidator
+import eu.kanade.tachiyomi.data.backup.models.Backup
 import eu.kanade.tachiyomi.ui.base.controller.DialogController
 import eu.kanade.tachiyomi.ui.main.MainActivity
 import eu.kanade.tachiyomi.util.system.MiuiUtil
@@ -203,7 +201,7 @@ class SettingsBackupController : SettingsController() {
             val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
                 .addCategory(Intent.CATEGORY_OPENABLE)
                 .setType("application/*")
-                .putExtra(Intent.EXTRA_TITLE, BackupFull.getDefaultFilename())
+                .putExtra(Intent.EXTRA_TITLE, Backup.getBackupFilename())
 
             startActivityForResult(intent, CODE_BACKUP_CREATE)
         } catch (e: ActivityNotFoundException) {
@@ -221,6 +219,7 @@ class SettingsBackupController : SettingsController() {
                 R.string.tracking,
                 R.string.history,
                 R.string.custom_manga_info,
+                R.string.all_read_manga,
             )
                 .map { activity.getString(it) }
 
@@ -228,7 +227,7 @@ class SettingsBackupController : SettingsController() {
                 .setTitle(R.string.what_should_backup)
                 .setMultiChoiceItems(
                     options.toTypedArray(),
-                    booleanArrayOf(true, true, true, true, true, true),
+                    options.map { true }.toBooleanArray(),
                 ) { dialog, position, _ ->
                     if (position == 0) {
                         val listView = (dialog as AlertDialog).listView
@@ -246,6 +245,7 @@ class SettingsBackupController : SettingsController() {
                                 3 -> flags = flags or BackupConst.BACKUP_TRACK
                                 4 -> flags = flags or BackupConst.BACKUP_HISTORY
                                 5 -> flags = flags or BackupConst.BACKUP_CUSTOM_INFO
+                                6 -> flags = flags or BackupConst.BACKUP_READ_MANGA
                             }
                         }
                     }
@@ -268,19 +268,9 @@ class SettingsBackupController : SettingsController() {
             val uri: Uri = args.getParcelable(KEY_URI)!!
 
             return try {
-                var type = BackupConst.BACKUP_TYPE_FULL
-                val results = try {
-                    FullBackupRestoreValidator().validate(activity, uri)
-                } catch (_: ValidatorParseException) {
-                    type = BackupConst.BACKUP_TYPE_LEGACY
-                    LegacyBackupRestoreValidator().validate(activity, uri)
-                }
+                val results = BackupFileValidator().validate(activity, uri)
 
-                var message = if (type == BackupConst.BACKUP_TYPE_FULL) {
-                    activity.getString(R.string.restore_content_full)
-                } else {
-                    activity.getString(R.string.restore_content)
-                }
+                var message = activity.getString(R.string.restore_content_full)
                 if (results.missingSources.isNotEmpty()) {
                     message += "\n\n${activity.getString(R.string.restore_missing_sources)}\n${results.missingSources.joinToString("\n") { "- $it" }}"
                 }
@@ -295,7 +285,7 @@ class SettingsBackupController : SettingsController() {
                         val context = applicationContext
                         if (context != null) {
                             activity.toast(R.string.restoring_backup)
-                            BackupRestoreService.start(context, uri, type)
+                            BackupRestoreService.start(context, uri)
                         }
                     }.create()
             } catch (e: Exception) {

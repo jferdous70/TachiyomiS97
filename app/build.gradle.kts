@@ -127,14 +127,11 @@ dependencies {
     }
     implementation("com.github.tachiyomiorg:image-decoder:7481a4a")
 
-    // Source models and interfaces from Tachiyomi 1.x
-    implementation("tachiyomi.sourceapi:source-api:1.1")
-
     // Android X libraries
-    implementation("androidx.appcompat:appcompat:1.6.0-alpha03")
+    implementation("androidx.appcompat:appcompat:1.6.0-beta01")
     implementation("androidx.cardview:cardview:1.0.0")
-    implementation("com.google.android.material:material:1.7.0-alpha02")
-    implementation("androidx.webkit:webkit:1.4.0")
+    implementation("com.google.android.material:material:1.7.0-beta01")
+    implementation("androidx.webkit:webkit:1.5.0-rc01")
     implementation("androidx.recyclerview:recyclerview:1.2.1")
     implementation("androidx.preference:preference:1.2.0")
     implementation("androidx.annotation:annotation:1.4.0")
@@ -142,14 +139,15 @@ dependencies {
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.palette:palette:1.0.0")
     implementation("androidx.core:core-ktx:1.8.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1")
+    implementation("com.google.android.flexbox:flexbox:3.0.0")
 
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
 
     implementation("androidx.multidex:multidex:2.0.1")
 
-    implementation("com.google.firebase:firebase-core:21.0.0")
-    implementation("com.google.firebase:firebase-analytics-ktx:21.0.0")
+    implementation("com.google.firebase:firebase-core:21.1.0")
+    implementation("com.google.firebase:firebase-analytics-ktx:21.1.0")
 
     val lifecycleVersion = "2.4.0-rc01"
     kapt("androidx.lifecycle:lifecycle-compiler:$lifecycleVersion")
@@ -187,8 +185,6 @@ dependencies {
 
     // JavaScript engine
     implementation("app.cash.quickjs:quickjs-android:0.9.2")
-    // TODO: remove Duktape once all extensions are using QuickJS
-    implementation("com.squareup.duktape:duktape-android:1.4.0")
 
     // Disk
     implementation("com.jakewharton:disklrucache:2.0.2")

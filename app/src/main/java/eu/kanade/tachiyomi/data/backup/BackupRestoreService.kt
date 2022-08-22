@@ -8,11 +8,10 @@ import android.os.IBinder
 import android.os.PowerManager
 import androidx.core.content.ContextCompat
 import eu.kanade.tachiyomi.R
-import eu.kanade.tachiyomi.data.backup.full.FullBackupRestore
-import eu.kanade.tachiyomi.data.backup.legacy.LegacyBackupRestore
 import eu.kanade.tachiyomi.data.notification.Notifications
 import eu.kanade.tachiyomi.util.system.acquireWakeLock
 import eu.kanade.tachiyomi.util.system.isServiceRunning
+import eu.kanade.tachiyomi.util.system.localeContext
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -43,11 +42,10 @@ class BackupRestoreService : Service() {
          * @param context context of application
          * @param uri path of Uri
          */
-        fun start(context: Context, uri: Uri, mode: Int) {
+        fun start(context: Context, uri: Uri) {
             if (!isRunning(context)) {
                 val intent = Intent(context, BackupRestoreService::class.java).apply {
                     putExtra(BackupConst.EXTRA_URI, uri)
-                    putExtra(BackupConst.EXTRA_MODE, mode)
                 }
                 ContextCompat.startForegroundService(context, intent)
             }
@@ -61,7 +59,7 @@ class BackupRestoreService : Service() {
         fun stop(context: Context) {
             context.stopService(Intent(context, BackupRestoreService::class.java))
 
-            BackupNotifier(context).showRestoreError(context.getString(R.string.restoring_backup_canceled))
+            BackupNotifier(context.localeContext).showRestoreError(context.getString(R.string.restoring_backup_canceled))
         }
     }
 
@@ -71,14 +69,14 @@ class BackupRestoreService : Service() {
     private lateinit var wakeLock: PowerManager.WakeLock
 
     private lateinit var ioScope: CoroutineScope
-    private var backupRestore: AbstractBackupRestore<*>? = null
+    private var restorer: AbstractBackupRestore<*>? = null
     private lateinit var notifier: BackupNotifier
 
     override fun onCreate() {
         super.onCreate()
 
         ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-        notifier = BackupNotifier(this)
+        notifier = BackupNotifier(this.localeContext)
         wakeLock = acquireWakeLock()
 
         startForeground(Notifications.ID_RESTORE_PROGRESS, notifier.showRestoreProgress().build())
@@ -95,7 +93,7 @@ class BackupRestoreService : Service() {
     }
 
     private fun destroyJob() {
-        backupRestore?.job?.cancel()
+        restorer?.job?.cancel()
         ioScope.cancel()
         if (wakeLock.isHeld) {
             wakeLock.release()
@@ -117,32 +115,28 @@ class BackupRestoreService : Service() {
      */
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val uri = intent?.getParcelableExtra<Uri>(BackupConst.EXTRA_URI) ?: return START_NOT_STICKY
-        val mode = intent.getIntExtra(BackupConst.EXTRA_MODE, BackupConst.BACKUP_TYPE_FULL)
 
         // Cancel any previous job if needed.
-        backupRestore?.job?.cancel()
+        restorer?.job?.cancel()
 
-        backupRestore = when (mode) {
-            BackupConst.BACKUP_TYPE_FULL -> FullBackupRestore(this, notifier)
-            else -> LegacyBackupRestore(this, notifier)
-        }
+        restorer = BackupRestorer(this, notifier)
 
         val handler = CoroutineExceptionHandler { _, exception ->
             Timber.e(exception)
-            backupRestore?.writeErrorLog()
+            restorer?.writeErrorLog()
 
             notifier.showRestoreError(exception.message)
             stopSelf(startId)
         }
         val job = ioScope.launch(handler) {
-            if (backupRestore?.restoreBackup(uri) == false) {
+            if (restorer?.restoreBackup(uri) == false) {
                 notifier.showRestoreError(getString(R.string.restoring_backup_canceled))
             }
         }
         job.invokeOnCompletion {
             stopSelf(startId)
         }
-        backupRestore?.job = job
+        restorer?.job = job
 
         return START_NOT_STICKY
     }

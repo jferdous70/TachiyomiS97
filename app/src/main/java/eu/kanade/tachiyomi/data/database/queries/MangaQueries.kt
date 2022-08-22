@@ -167,10 +167,35 @@ interface MangaQueries : DbProvider {
         )
         .prepare()
 
+    fun deleteMangasNotInLibraryAndNotReadBySourceIds(sourceIds: List<Long>) = db.delete()
+        .byQuery(
+            DeleteQuery.builder()
+                .table(MangaTable.TABLE)
+                .where(
+                    """
+                    ${MangaTable.COL_FAVORITE} = ? AND ${MangaTable.COL_SOURCE} IN (${Queries.placeholders(sourceIds.size)}) AND ${MangaTable.COL_ID} NOT IN (
+                        SELECT ${ChapterTable.COL_MANGA_ID} FROM ${ChapterTable.TABLE} WHERE ${ChapterTable.COL_READ} = 1 OR ${ChapterTable.COL_LAST_PAGE_READ} != 0
+                    )
+                    """.trimIndent(),
+                )
+                .whereArgs(0, *sourceIds.toTypedArray())
+                .build(),
+        )
+        .prepare()
+
     fun deleteMangas() = db.delete()
         .byQuery(
             DeleteQuery.builder()
                 .table(MangaTable.TABLE)
+                .build(),
+        )
+        .prepare()
+
+    fun getReadNotInLibraryMangas() = db.get()
+        .listOfObjects(Manga::class.java)
+        .withQuery(
+            RawQuery.builder()
+                .query(getReadMangaNotInLibraryQuery())
                 .build(),
         )
         .prepare()

@@ -17,7 +17,6 @@ import eu.kanade.tachiyomi.data.database.models.Category
 import eu.kanade.tachiyomi.data.database.models.Chapter
 import eu.kanade.tachiyomi.data.database.models.LibraryManga
 import eu.kanade.tachiyomi.data.database.models.Manga
-import eu.kanade.tachiyomi.data.database.models.toMangaInfo
 import eu.kanade.tachiyomi.data.download.DownloadManager
 import eu.kanade.tachiyomi.data.download.DownloadService
 import eu.kanade.tachiyomi.data.library.LibraryUpdateService.Companion.start
@@ -33,8 +32,6 @@ import eu.kanade.tachiyomi.extension.ExtensionUpdateJob
 import eu.kanade.tachiyomi.source.SourceManager
 import eu.kanade.tachiyomi.source.UnmeteredSource
 import eu.kanade.tachiyomi.source.model.SManga
-import eu.kanade.tachiyomi.source.model.toSChapter
-import eu.kanade.tachiyomi.source.model.toSManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.chapter.syncChaptersWithSource
 import eu.kanade.tachiyomi.util.chapter.syncChaptersWithTrackServiceTwoWay
@@ -43,6 +40,7 @@ import eu.kanade.tachiyomi.util.shouldDownloadNewChapters
 import eu.kanade.tachiyomi.util.storage.getUriCompat
 import eu.kanade.tachiyomi.util.system.acquireWakeLock
 import eu.kanade.tachiyomi.util.system.createFileInCacheDir
+import eu.kanade.tachiyomi.util.system.localeContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
@@ -173,7 +171,7 @@ class LibraryUpdateService(
      */
     override fun onCreate() {
         super.onCreate()
-        notifier = LibraryUpdateNotifier(this)
+        notifier = LibraryUpdateNotifier(this.localeContext)
         wakeLock = acquireWakeLock(timeout = TimeUnit.MINUTES.toMillis(30))
         startForeground(Notifications.ID_LIBRARY_PROGRESS, notifier.progressNotificationBuilder.build())
     }
@@ -384,7 +382,7 @@ class LibraryUpdateService(
             val errorFile = writeErrorFile(failedUpdates).getUriCompat(this)
             notifier.showUpdateErrorNotification(failedUpdates.map { "${it.value}: ${it.key.title}" }, errorFile)
         }
-        mangaShortcutManager.updateShortcuts()
+        mangaShortcutManager.updateShortcuts(this)
         failedUpdates.clear()
         notifier.cancelProgressNotification()
         if (runExtensionUpdatesAfter && !DownloadService.isRunning(this)) {
@@ -423,7 +421,7 @@ class LibraryUpdateService(
             notifier.showProgressNotification(manga, progress, mangaToUpdate.size)
             val source = sourceManager.get(manga.source) as? HttpSource ?: return false
             val fetchedChapters = withContext(Dispatchers.IO) {
-                source.getChapterList(manga.toMangaInfo()).map { it.toSChapter() }
+                source.getChapterList(manga)
             }
             if (fetchedChapters.isNotEmpty()) {
                 val newChapters = syncChaptersWithSource(db, fetchedChapters, manga, source)
@@ -507,7 +505,7 @@ class LibraryUpdateService(
                         )
 
                         val networkManga = try {
-                            source.getMangaDetails(manga.toMangaInfo()).toSManga()
+                            source.getMangaDetails(manga.copy())
                         } catch (e: java.lang.Exception) {
                             Timber.e(e)
                             null

@@ -59,4 +59,12 @@ class NetworkHelper(val context: Context) {
             .addInterceptor(CloudflareInterceptor(context))
             .build()
     }
+
+    val defaultUserAgent by lazy {
+        preferences.defaultUserAgent().get()
+    }
+
+    companion object {
+        val DEFAULT_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:103.0) Gecko/20100101 Firefox/103.0"
+    }
 }

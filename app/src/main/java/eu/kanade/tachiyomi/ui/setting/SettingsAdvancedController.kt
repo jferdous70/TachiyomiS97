@@ -27,9 +27,13 @@ import eu.kanade.tachiyomi.data.library.LibraryUpdateService.Target
 import eu.kanade.tachiyomi.data.preference.PreferenceKeys
 import eu.kanade.tachiyomi.extension.ShizukuInstaller
 import eu.kanade.tachiyomi.network.NetworkHelper
+import eu.kanade.tachiyomi.network.PREF_DOH_360
 import eu.kanade.tachiyomi.network.PREF_DOH_ADGUARD
+import eu.kanade.tachiyomi.network.PREF_DOH_ALIDNS
 import eu.kanade.tachiyomi.network.PREF_DOH_CLOUDFLARE
+import eu.kanade.tachiyomi.network.PREF_DOH_DNSPOD
 import eu.kanade.tachiyomi.network.PREF_DOH_GOOGLE
+import eu.kanade.tachiyomi.network.PREF_DOH_QUAD101
 import eu.kanade.tachiyomi.network.PREF_DOH_QUAD9
 import eu.kanade.tachiyomi.source.SourceManager
 import eu.kanade.tachiyomi.ui.base.controller.DialogController
@@ -39,6 +43,7 @@ import eu.kanade.tachiyomi.util.system.disableItems
 import eu.kanade.tachiyomi.util.system.isPackageInstalled
 import eu.kanade.tachiyomi.util.system.launchIO
 import eu.kanade.tachiyomi.util.system.launchUI
+import eu.kanade.tachiyomi.util.system.localeContext
 import eu.kanade.tachiyomi.util.system.materialAlertDialog
 import eu.kanade.tachiyomi.util.system.setDefaultSettings
 import eu.kanade.tachiyomi.util.system.toast
@@ -90,7 +95,7 @@ class SettingsAdvancedController : SettingsController() {
             summaryRes = R.string.saves_error_logs
 
             onClick {
-                CrashLogUtil(context).dumpLogs()
+                CrashLogUtil(context.localeContext).dumpLogs()
             }
         }
 
@@ -239,6 +244,10 @@ class SettingsAdvancedController : SettingsController() {
                     R.string.google,
                     R.string.ad_guard,
                     R.string.quad9,
+                    R.string.aliDNS,
+                    R.string.dnsPod,
+                    R.string.dns_360,
+                    R.string.quad_101,
                 )
                 entryValues = listOf(
                     -1,
@@ -246,9 +255,22 @@ class SettingsAdvancedController : SettingsController() {
                     PREF_DOH_GOOGLE,
                     PREF_DOH_ADGUARD,
                     PREF_DOH_QUAD9,
+                    PREF_DOH_ALIDNS,
+                    PREF_DOH_DNSPOD,
+                    PREF_DOH_360,
+                    PREF_DOH_QUAD101,
                 )
 
                 defaultValue = -1
+                onChange {
+                    activity?.toast(R.string.requires_app_restart)
+                    true
+                }
+            }
+            editTextPreference(activity) {
+                bindTo(preferences.defaultUserAgent())
+                titleRes = R.string.user_agent_string
+
                 onChange {
                     activity?.toast(R.string.requires_app_restart)
                     true

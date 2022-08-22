@@ -24,6 +24,7 @@ import eu.kanade.tachiyomi.util.system.connectivityManager
 import eu.kanade.tachiyomi.util.system.isConnectedToWifi
 import eu.kanade.tachiyomi.util.system.isOnline
 import eu.kanade.tachiyomi.util.system.isServiceRunning
+import eu.kanade.tachiyomi.util.system.localeContext
 import eu.kanade.tachiyomi.util.system.powerManager
 import rx.subscriptions.CompositeSubscription
 import uy.kohesive.injekt.injectLazy
@@ -92,6 +93,9 @@ class DownloadService : Service() {
         fun isRunning(context: Context): Boolean {
             return context.isServiceRunning(DownloadService::class.java)
         }
+
+        private const val STOP_REASON_NO_WIFI = 1
+        private const val STOP_REASON_NO_INTERNET = 2
     }
 
     /**
@@ -115,6 +119,8 @@ class DownloadService : Service() {
      * Subscriptions to store while the service is running.
      */
     private lateinit var subscriptions: CompositeSubscription
+
+    private var stopReason: Int? = null
 
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) {
@@ -157,7 +163,13 @@ class DownloadService : Service() {
         runningRelay.call(false)
         subscriptions.unsubscribe()
         connectivityManager.unregisterNetworkCallback(networkCallback)
-        downloadManager.stopDownloads()
+        downloadManager.stopDownloads(
+            when (stopReason) {
+                STOP_REASON_NO_INTERNET -> getString(R.string.no_network_connection)
+                STOP_REASON_NO_WIFI -> getString(R.string.no_wifi_connection)
+                else -> null
+            },
+        )
         callListeners(false)
         wakeLock.releaseIfNeeded()
         if (LibraryUpdateService.runExtensionUpdatesAfter) {
@@ -201,12 +213,15 @@ class DownloadService : Service() {
         val manager = connectivityManager
         val networkCapabilities = manager.getNetworkCapabilities(manager.activeNetwork)
         if (networkCapabilities == null || !isOnline()) {
-            downloadManager.stopDownloads(getString(R.string.no_network_connection))
+            stopReason = STOP_REASON_NO_INTERNET
+            stopSelf()
             return
         }
         if (preferences.downloadOnlyOverWifi() && !isConnectedToWifi()) {
-            downloadManager.stopDownloads(getString(R.string.no_wifi_connection))
+            stopReason = STOP_REASON_NO_WIFI
+            stopSelf()
         } else {
+            stopReason = null
             val started = downloadManager.startDownloads()
             if (!started) stopSelf()
         }
@@ -241,7 +256,7 @@ class DownloadService : Service() {
 
     private fun getPlaceholderNotification(): Notification {
         return NotificationCompat.Builder(this, Notifications.CHANNEL_DOWNLOADER)
-            .setContentTitle(getString(R.string.downloading))
+            .setContentTitle(localeContext.getString(R.string.downloading))
             .build()
     }
 }

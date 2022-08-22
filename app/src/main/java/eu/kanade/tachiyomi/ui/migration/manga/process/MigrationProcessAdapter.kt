@@ -2,10 +2,13 @@ package eu.kanade.tachiyomi.ui.migration.manga.process
 
 import android.view.MenuItem
 import eu.davidea.flexibleadapter.FlexibleAdapter
+import eu.kanade.tachiyomi.data.cache.CoverCache
 import eu.kanade.tachiyomi.data.database.DatabaseHelper
 import eu.kanade.tachiyomi.data.database.models.History
 import eu.kanade.tachiyomi.data.database.models.Manga
 import eu.kanade.tachiyomi.data.database.models.MangaCategory
+import eu.kanade.tachiyomi.data.library.CustomMangaManager
+import eu.kanade.tachiyomi.data.library.CustomMangaManager.Companion.toJson
 import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.data.track.EnhancedTrackService
 import eu.kanade.tachiyomi.data.track.TrackManager
@@ -29,6 +32,8 @@ class MigrationProcessAdapter(
     var items: List<MigrationProcessItem> = emptyList()
     val preferences: PreferencesHelper by injectLazy()
     val sourceManager: SourceManager by injectLazy()
+    val coverCache: CoverCache by injectLazy()
+    val customMangaManager: CustomMangaManager by injectLazy()
 
     var showOutline = preferences.outlineOnCovers().get()
     val menuItemListener: MigrationProcessInterface = controller
@@ -130,7 +135,7 @@ class MigrationProcessAdapter(
     ) {
         if (controller.config == null) return
         val flags = preferences.migrateFlags().get()
-        migrateMangaInternal(flags, db, enhancedServices, prevSource, source, prevManga, manga, replace)
+        migrateMangaInternal(flags, db, enhancedServices, coverCache, customMangaManager, prevSource, source, prevManga, manga, replace)
     }
 
     companion object {
@@ -139,6 +144,8 @@ class MigrationProcessAdapter(
             flags: Int,
             db: DatabaseHelper,
             enhancedServices: List<EnhancedTrackService>,
+            coverCache: CoverCache,
+            customMangaManager: CustomMangaManager,
             prevSource: Source?,
             source: Source,
             prevManga: Manga,
@@ -164,7 +171,10 @@ class MigrationProcessAdapter(
                             prevHistoryList.find { it.chapter_id == prevChapter.id }
                                 ?.let { prevHistory ->
                                     val history = History.create(chapter)
-                                        .apply { last_read = prevHistory.last_read }
+                                        .apply {
+                                            last_read = prevHistory.last_read
+                                            time_read = prevHistory.time_read
+                                        }
                                     historyList.add(history)
                                 }
                         } else if (chapter.chapter_number <= maxChapterRead) {
@@ -173,7 +183,7 @@ class MigrationProcessAdapter(
                     }
                 }
                 db.insertChapters(dbChapters).executeAsBlocking()
-                db.updateHistoryLastRead(historyList).executeAsBlocking()
+                db.upsertHistoryLastRead(historyList).executeAsBlocking()
             }
             // Update categories
             if (MigrationFlags.hasCategories(flags)) {
@@ -203,6 +213,18 @@ class MigrationProcessAdapter(
             manga.favorite = true
             if (replace) manga.date_added = prevManga.date_added
             else manga.date_added = Date().time
+
+            // Update custom cover & info
+            if (MigrationFlags.hasCustomMangaInfo(flags)) {
+                if (coverCache.getCustomCoverFile(prevManga).exists()) {
+                    coverCache.setCustomCoverToCache(manga, coverCache.getCustomCoverFile(prevManga).inputStream())
+                }
+                customMangaManager.getManga(prevManga)?.let { customManga ->
+                    customManga.id = manga.id!!
+                    customMangaManager.saveMangaInfo(customManga.toJson())
+                }
+            }
+
             db.updateMangaFavorite(manga).executeAsBlocking()
             db.updateMangaAdded(manga).executeAsBlocking()
             db.updateMangaTitle(manga).executeAsBlocking()

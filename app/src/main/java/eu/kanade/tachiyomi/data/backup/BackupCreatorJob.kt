@@ -13,9 +13,9 @@ import androidx.work.Worker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.hippo.unifile.UniFile
-import eu.kanade.tachiyomi.data.backup.full.FullBackupManager
 import eu.kanade.tachiyomi.data.notification.Notifications
 import eu.kanade.tachiyomi.data.preference.PreferencesHelper
+import eu.kanade.tachiyomi.util.system.localeContext
 import eu.kanade.tachiyomi.util.system.notificationManager
 import timber.log.Timber
 import uy.kohesive.injekt.Injekt
@@ -27,7 +27,7 @@ class BackupCreatorJob(private val context: Context, workerParams: WorkerParamet
 
     override fun doWork(): Result {
         val preferences = Injekt.get<PreferencesHelper>()
-        val notifier = BackupNotifier(context)
+        val notifier = BackupNotifier(context.localeContext)
         val uri = inputData.getString(LOCATION_URI_KEY)?.let { Uri.parse(it) }
             ?: preferences.backupsDirectory().get().toUri()
         val flags = inputData.getInt(BACKUP_FLAGS_KEY, BackupConst.BACKUP_ALL)
@@ -35,7 +35,7 @@ class BackupCreatorJob(private val context: Context, workerParams: WorkerParamet
 
         context.notificationManager.notify(Notifications.ID_BACKUP_PROGRESS, notifier.showBackupProgress().build())
         return try {
-            val location = FullBackupManager(context).createBackup(uri, flags, isAutoBackup)
+            val location = BackupManager(context).createBackup(uri, flags, isAutoBackup)
             if (!isAutoBackup) notifier.showBackupComplete(UniFile.fromUri(context, location.toUri()))
             Result.success()
         } catch (e: Exception) {

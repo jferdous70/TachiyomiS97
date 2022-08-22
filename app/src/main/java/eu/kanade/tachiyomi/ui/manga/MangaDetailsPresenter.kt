@@ -17,7 +17,6 @@ import eu.kanade.tachiyomi.data.database.models.Category
 import eu.kanade.tachiyomi.data.database.models.Chapter
 import eu.kanade.tachiyomi.data.database.models.Manga
 import eu.kanade.tachiyomi.data.database.models.Track
-import eu.kanade.tachiyomi.data.database.models.toMangaInfo
 import eu.kanade.tachiyomi.data.download.DownloadManager
 import eu.kanade.tachiyomi.data.download.model.Download
 import eu.kanade.tachiyomi.data.download.model.DownloadQueue
@@ -33,8 +32,6 @@ import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.SourceManager
 import eu.kanade.tachiyomi.source.SourceNotFoundException
 import eu.kanade.tachiyomi.source.model.SManga
-import eu.kanade.tachiyomi.source.model.toSChapter
-import eu.kanade.tachiyomi.source.model.toSManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.ui.base.presenter.BaseCoroutinePresenter
 import eu.kanade.tachiyomi.ui.manga.chapter.ChapterItem
@@ -323,7 +320,7 @@ class MangaDetailsPresenter(
             var chapterError: java.lang.Exception? = null
             val chapters = async(Dispatchers.IO) {
                 try {
-                    source.getChapterList(manga.toMangaInfo()).map { it.toSChapter() }
+                    source.getChapterList(manga)
                 } catch (e: Exception) {
                     chapterError = e
                     emptyList()
@@ -332,7 +329,7 @@ class MangaDetailsPresenter(
             val thumbnailUrl = manga.thumbnail_url
             val nManga = async(Dispatchers.IO) {
                 try {
-                    source.getMangaDetails(manga.toMangaInfo()).toSManga()
+                    source.getMangaDetails(manga.copy())
                 } catch (e: java.lang.Exception) {
                     mangaError = e
                     null
@@ -374,7 +371,7 @@ class MangaDetailsPresenter(
                                 .map { it.toModel() },
                         )
                     }
-                    mangaShortcutManager.updateShortcuts()
+                    controller?.view?.context?.let { mangaShortcutManager.updateShortcuts(it) }
                 }
                 if (newChapters.second.isNotEmpty()) {
                     val removedChaptersId = newChapters.second.map { it.id }
@@ -419,7 +416,7 @@ class MangaDetailsPresenter(
 
         presenterScope.launch(Dispatchers.IO) {
             val chapters = try {
-                source.getChapterList(manga.toMangaInfo()).map { it.toSChapter() }
+                source.getChapterList(manga)
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) { controller?.showError(trimException(e)) }
                 return@launch
@@ -447,7 +444,7 @@ class MangaDetailsPresenter(
             ) e.message?.split(": ")?.drop(1)
                 ?.joinToString(": ")
             else e.message
-            ) ?: preferences.context.getString(R.string.unknown_error)
+            ) ?: controller?.view?.context?.getString(R.string.unknown_error) ?: ""
     }
 
     /**
@@ -575,8 +572,8 @@ class MangaDetailsPresenter(
      */
     fun hideTitle(hide: Boolean) {
         manga.displayMode = if (hide) Manga.CHAPTER_DISPLAY_NUMBER else Manga.CHAPTER_DISPLAY_NAME
-        db.updateChapterFlags(manga).executeAsBlocking()
         manga.setFilterToLocal()
+        db.updateChapterFlags(manga).executeAsBlocking()
         if (mangaFilterMatchesDefault()) {
             manga.setFilterToGlobal()
         }
@@ -636,7 +633,8 @@ class MangaDetailsPresenter(
         filtersId.add(if (manga.bookmarkedFilter(preferences) == Manga.CHAPTER_SHOW_BOOKMARKED) R.string.bookmarked else null)
         filtersId.add(if (manga.bookmarkedFilter(preferences) == Manga.CHAPTER_SHOW_NOT_BOOKMARKED) R.string.not_bookmarked else null)
         filtersId.add(if (manga.filtered_scanlators?.isNotEmpty() == true) R.string.scanlators else null)
-        return filtersId.filterNotNull().joinToString(", ") { preferences.context.getString(it) }
+        return filtersId.filterNotNull()
+            .joinToString(", ") { controller?.view?.context?.getString(it) ?: "" }
     }
 
     fun setScanlatorFilter(filteredScanlators: Set<String>) {
