@@ -26,7 +26,7 @@ import uy.kohesive.injekt.api.get
 fun syncChaptersWithTrackServiceTwoWay(db: DatabaseHelper, chapters: List<Chapter>, remoteTrack: Track, service: TrackService) {
     val sortedChapters = chapters.sortedBy { it.chapter_number }
     sortedChapters
-        .filter { chapter -> chapter.chapter_number <= remoteTrack.last_chapter_read && !chapter.read && chapter.chapter_number >= 0 }
+        .filter { chapter -> chapter.chapter_number <= remoteTrack.last_chapter_read && !chapter.read && remoteTrack.last_chapter_read >= 2 && chapter.chapter_number >= 0 }
         .forEach { it.read = true }
     db.updateChaptersProgress(sortedChapters).executeAsBlocking()
 
