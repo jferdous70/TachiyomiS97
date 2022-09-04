@@ -7,6 +7,7 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
@@ -22,6 +23,8 @@ import android.view.ViewGroup
 import android.view.ViewPropertyAnimator
 import android.view.ViewTreeObserver
 import android.view.inputmethod.InputMethodManager
+import android.widget.ImageView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.ActionMode
 import androidx.coordinatorlayout.widget.CoordinatorLayout
@@ -32,6 +35,7 @@ import androidx.core.view.WindowInsetsAnimationCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.Type.ime
 import androidx.core.view.WindowInsetsCompat.Type.systemBars
+import androidx.core.view.isGone
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.core.view.marginTop
@@ -66,11 +70,13 @@ import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.databinding.LibraryControllerBinding
 import eu.kanade.tachiyomi.source.LocalSource
 import eu.kanade.tachiyomi.ui.base.MaterialMenuSheet
+import eu.kanade.tachiyomi.ui.base.MiniSearchView
 import eu.kanade.tachiyomi.ui.base.controller.BaseCoroutineController
 import eu.kanade.tachiyomi.ui.category.CategoryController
 import eu.kanade.tachiyomi.ui.category.ManageCategoryDialog
 import eu.kanade.tachiyomi.ui.library.LibraryGroup.BY_AUTHOR
 import eu.kanade.tachiyomi.ui.library.LibraryGroup.BY_DEFAULT
+import eu.kanade.tachiyomi.ui.library.LibraryGroup.BY_LANGUAGE
 import eu.kanade.tachiyomi.ui.library.LibraryGroup.BY_SOURCE
 import eu.kanade.tachiyomi.ui.library.LibraryGroup.BY_STATUS
 import eu.kanade.tachiyomi.ui.library.LibraryGroup.BY_TAG
@@ -90,8 +96,10 @@ import eu.kanade.tachiyomi.util.isLocal
 import eu.kanade.tachiyomi.util.lang.toNormalized
 import eu.kanade.tachiyomi.util.moveCategories
 import eu.kanade.tachiyomi.util.system.contextCompatDrawable
+import eu.kanade.tachiyomi.util.system.disableItems
 import eu.kanade.tachiyomi.util.system.dpToPx
 import eu.kanade.tachiyomi.util.system.getResourceColor
+import eu.kanade.tachiyomi.util.system.getResourceDrawable
 import eu.kanade.tachiyomi.util.system.ignoredSystemInsets
 import eu.kanade.tachiyomi.util.system.isImeVisible
 import eu.kanade.tachiyomi.util.system.launchUI
@@ -100,6 +108,7 @@ import eu.kanade.tachiyomi.util.system.openInBrowser
 import eu.kanade.tachiyomi.util.system.rootWindowInsetsCompat
 import eu.kanade.tachiyomi.util.view.activityBinding
 import eu.kanade.tachiyomi.util.view.collapse
+import eu.kanade.tachiyomi.util.view.compatToolTipText
 import eu.kanade.tachiyomi.util.view.expand
 import eu.kanade.tachiyomi.util.view.fullAppBarHeight
 import eu.kanade.tachiyomi.util.view.getItemView
@@ -241,6 +250,8 @@ class LibraryController(
     var staggeredBundle: Parcelable? = null
     private var staggeredObserver: ViewTreeObserver.OnGlobalLayoutListener? = null
 
+    // Dynamically injected into the search bar, controls category visibility during search
+    private var showAllCategoriesView: ImageView? = null
     override fun getTitle(): String? {
         setSubtitle()
         return view?.context?.getString(R.string.library)
@@ -500,6 +511,7 @@ class LibraryController(
         if (presenter.isLoggedIntoTracking) {
             groupItems.add(BY_TRACK_STATUS)
         }
+        groupItems.add(BY_LANGUAGE)
         if (presenter.allCategories.size > 1) {
             groupItems.add(UNGROUPED)
         }
@@ -1052,6 +1064,10 @@ class LibraryController(
         displaySheet = null
         mAdapter = null
         saveStaggeredState()
+
+        showAllCategoriesView?.let {
+            (activityBinding?.searchToolbar?.searchView as? MiniSearchView)?.removeSearchModifierIcon(it)
+        }
         super.onDestroyView(view)
     }
 
@@ -1171,7 +1187,7 @@ class LibraryController(
             showMiniBar()
         }
         updateHopperAlpha()
-        val isSingleCategory = !presenter.showAllCategories || presenter.forceShowAllCategories
+        val isSingleCategory = !presenter.showAllCategories && !presenter.forceShowAllCategories
         val context = binding.roundedCategoryHopper.root.context
         binding.roundedCategoryHopper.upCategory.setImageDrawable(
             context.contextCompatDrawable(
@@ -1341,10 +1357,12 @@ class LibraryController(
     }
 
     fun search(query: String?): Boolean {
-        if (!query.isNullOrBlank() && this.query.isBlank() && !presenter.showAllCategories) {
-            presenter.forceShowAllCategories = true
+        val isShowAllCategoriesSet = preferences.showAllCategories().get()
+        if (!query.isNullOrBlank() && this.query.isBlank() && !isShowAllCategoriesSet) {
+            presenter.forceShowAllCategories = preferences.showAllCategoriesWhenSearchingSingleCategory().get()
             presenter.getLibrary()
-        } else if (query.isNullOrBlank() && this.query.isNotBlank() && presenter.forceShowAllCategories) {
+        } else if (query.isNullOrBlank() && this.query.isNotBlank() && !isShowAllCategoriesSet) {
+            preferences.showAllCategoriesWhenSearchingSingleCategory().set(presenter.forceShowAllCategories)
             presenter.forceShowAllCategories = false
             presenter.getLibrary()
         }
@@ -1353,14 +1371,11 @@ class LibraryController(
             binding.libraryGridRecycler.recycler.scrollToPosition(0)
         }
         this.query = query?.toNormalized() ?: ""
-        if (this.query.isNotBlank() && adapter.scrollableHeaders.isEmpty()) {
+        showAllCategoriesView?.isGone = isShowAllCategoriesSet || presenter.groupType != BY_DEFAULT || this.query.isBlank()
+        showAllCategoriesView?.isSelected = presenter.forceShowAllCategories
+        if (this.query.isNotBlank()) {
             searchItem.string = this.query
-            adapter.addScrollableHeader(searchItem)
-        } else if (this.query.isNotBlank()) {
-            searchItem.string = this.query
-            (binding.libraryGridRecycler.recycler.findViewHolderForAdapterPosition(0) as? SearchGlobalItem.Holder)?.bind(
-                this.query,
-            )
+            if (adapter.scrollableHeaders.isEmpty()) { adapter.addScrollableHeader(searchItem) }
         } else if (this.query.isBlank() && adapter.scrollableHeaders.isNotEmpty()) {
             adapter.removeAllScrollableHeaders()
         }
@@ -1805,6 +1820,24 @@ class LibraryController(
         val searchView = activityBinding?.searchToolbar?.searchView
         activityBinding?.searchToolbar?.setQueryHint(resources?.getString(R.string.library_search_hint), query.isEmpty())
 
+        showAllCategoriesView = showAllCategoriesView ?: (searchView as? MiniSearchView)?.addSearchModifierIcon { context ->
+            ImageView(context).apply {
+                isSelected = presenter.forceShowAllCategories
+                isGone = true
+                setOnClickListener {
+                    presenter.forceShowAllCategories = !presenter.forceShowAllCategories
+                    presenter.getLibrary()
+                    isSelected = presenter.forceShowAllCategories
+                }
+                val pad = 12.dpToPx
+                setPadding(pad, 0, pad, 0)
+                setImageResource(R.drawable.ic_show_all_categories_24dp)
+                background = context.getResourceDrawable(R.attr.selectableItemBackgroundBorderless)
+                imageTintList = ColorStateList.valueOf(context.getResourceColor(R.attr.actionBarTintColor))
+                compatToolTipText = resources?.getText(R.string.show_all_categories)
+            }
+        }!!
+
         if (query.isNotEmpty()) {
             if (activityBinding?.searchToolbar?.isSearchExpanded != true) {
                 searchItem?.expandActionView()
@@ -1922,13 +1955,35 @@ class LibraryController(
             R.id.action_move_to_category -> showChangeMangaCategoriesSheet()
             R.id.action_share -> shareManga()
             R.id.action_delete -> {
+                val options = arrayOf(
+                    R.string.remove_downloads,
+                    R.string.remove_from_library,
+                )
+                    .map { activity!!.getString(it) }
                 activity!!.materialAlertDialog()
-                    .setMessage(R.string.remove_from_library_question)
-                    .setPositiveButton(R.string.remove) { _, _ ->
-                        deleteMangasFromLibrary()
+                    .setTitle(R.string.remove)
+                    .setMultiChoiceItems(
+                        options.toTypedArray(),
+                        options.map { true }.toBooleanArray(),
+                    ) { dialog, position, _ ->
+                        if (position == 0) {
+                            val listView = (dialog as AlertDialog).listView
+                            listView.setItemChecked(position, true)
+                        }
+                    }
+                    .setPositiveButton(R.string.remove) { dialog, _ ->
+                        val listView = (dialog as AlertDialog).listView
+                        if (listView.isItemChecked(1)) {
+                            deleteMangasFromLibrary()
+                        } else {
+                            val mangas = selectedMangas.toList()
+                            presenter.confirmDeletion(mangas, false)
+                        }
                     }
                     .setNegativeButton(android.R.string.cancel, null)
-                    .show()
+                    .show().apply {
+                        disableItems(arrayOf(options.first()))
+                    }
             }
             R.id.action_download_unread -> {
                 presenter.downloadUnread(selectedMangas.toList())

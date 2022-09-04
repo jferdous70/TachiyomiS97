@@ -58,6 +58,8 @@ class Anilist(private val context: Context, id: Int) : TrackService(id) {
 
     override fun getLogo() = R.drawable.ic_tracker_anilist
 
+    override fun getTrackerColor() = Color.rgb(2, 169, 255)
+
     override fun getLogoColor() = Color.rgb(18, 25, 35)
 
     override fun getStatusList() = listOf(READING, PLAN_TO_READ, COMPLETED, REREADING, PAUSED, DROPPED)
@@ -129,6 +131,8 @@ class Anilist(private val context: Context, id: Int) : TrackService(id) {
             else -> throw Exception("Unknown score type")
         }
     }
+
+    override fun get10PointScore(score: Float) = score / 10
 
     override fun displayScore(track: Track): String {
         val score = track.score

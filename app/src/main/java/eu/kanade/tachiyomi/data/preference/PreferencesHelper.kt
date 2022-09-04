@@ -322,7 +322,7 @@ class PreferencesHelper(val context: Context) {
     fun downloadNewChaptersInCategories() = flowPrefs.getStringSet("download_new_categories", emptySet())
     fun excludeCategoriesInDownloadNew() = flowPrefs.getStringSet("download_new_categories_exclude", emptySet())
 
-    fun autoDownloadAfterReading() = flowPrefs.getInt("auto_download_after_reading", 0)
+    fun autoDownloadWhileReading() = flowPrefs.getInt("auto_download_while_reading", 0)
 
     fun defaultCategory() = prefs.getInt(Keys.defaultCategory, -1)
 
@@ -394,6 +394,8 @@ class PreferencesHelper(val context: Context) {
     fun deleteRemovedChapters() = flowPrefs.getInt(Keys.deleteRemovedChapters, 0)
 
     fun showAllCategories() = flowPrefs.getBoolean("show_all_categories", true)
+
+    fun showAllCategoriesWhenSearchingSingleCategory() = flowPrefs.getBoolean("show_all_categories_when_searching_single_category", false)
 
     fun hopperGravity() = flowPrefs.getInt("hopper_gravity", 1)
 

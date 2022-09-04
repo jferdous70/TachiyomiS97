@@ -31,6 +31,8 @@ abstract class TrackService(val id: Int) {
     @DrawableRes
     abstract fun getLogo(): Int
 
+    abstract fun getTrackerColor(): Int
+
     abstract fun getLogoColor(): Int
 
     abstract fun getStatusList(): List<Int>
@@ -49,6 +51,10 @@ abstract class TrackService(val id: Int) {
 
     open fun indexToScore(index: Int): Float {
         return index.toFloat()
+    }
+
+    open fun get10PointScore(score: Float): Float {
+        return score
     }
 
     abstract fun displayScore(track: Track): String

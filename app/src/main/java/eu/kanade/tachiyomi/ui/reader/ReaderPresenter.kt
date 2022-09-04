@@ -14,6 +14,7 @@ import eu.kanade.tachiyomi.data.database.models.Chapter
 import eu.kanade.tachiyomi.data.database.models.History
 import eu.kanade.tachiyomi.data.database.models.Manga
 import eu.kanade.tachiyomi.data.download.DownloadManager
+import eu.kanade.tachiyomi.data.download.model.Download
 import eu.kanade.tachiyomi.data.notification.NotificationReceiver
 import eu.kanade.tachiyomi.data.notification.Notifications
 import eu.kanade.tachiyomi.data.preference.PreferencesHelper
@@ -45,7 +46,6 @@ import eu.kanade.tachiyomi.util.system.executeOnIO
 import eu.kanade.tachiyomi.util.system.launchIO
 import eu.kanade.tachiyomi.util.system.launchUI
 import eu.kanade.tachiyomi.util.system.localeContext
-import eu.kanade.tachiyomi.util.system.toInt
 import eu.kanade.tachiyomi.util.system.withUIContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -118,12 +118,7 @@ class ReaderPresenter(
      */
     private val isLoadingAdjacentChapterRelay = BehaviorRelay.create<Boolean>()
     private var finished = false
-    companion object {
-        /**
-         * To check if any chapter of the current reading session was downloaded
-         */
-        private var isAnyPrevChapterDownloaded = false
-    }
+    private var chapterDownload: Download? = null
 
     /**
      * Chapter list for the active manga. It's retrieved lazily and should be accessed for the first
@@ -187,15 +182,11 @@ class ReaderPresenter(
         deletePendingChapters()
         val currentChapters = viewerChaptersRelay.value
         if (currentChapters != null) {
-            val isChapterDownloaded = currentChapters.currChapter.pageLoader is DownloadPageLoader
             currentChapters.unref()
-            val currentChapter = currentChapters.currChapter
-            saveReadingProgress(currentChapter)
-            val currentChapterPageCount = currentChapter.chapter.last_page_read + currentChapter.chapter.pages_left
-            if ((currentChapter.chapter.last_page_read + 1.0) / currentChapterPageCount > 0.33 || isAnyPrevChapterDownloaded) {
-                downloadNextChapters(isChapterDownloaded)
+            saveReadingProgress(currentChapters.currChapter)
+            chapterDownload?.let {
+                downloadManager.addDownloadsToStartOfQueue(listOf(it))
             }
-            isAnyPrevChapterDownloaded = false
         }
     }
 
@@ -326,6 +317,7 @@ class ReaderPresenter(
                 newChapters.ref()
                 oldChapters?.unref()
 
+                chapterDownload = deleteChapterFromDownloadQueue(newChapters.currChapter)
                 viewerChaptersRelay.call(newChapters)
             }
     }
@@ -521,7 +513,6 @@ class ReaderPresenter(
         selectedChapter.chapter.last_page_read = page.index
         selectedChapter.chapter.pages_left =
             (selectedChapter.pages?.size ?: page.index) - page.index
-        downloadChaptersAheadDuringReading()
         val shouldTrack = !preferences.incognitoMode().get() || hasTrackers
         if (shouldTrack &&
             // For double pages, check if the second to last page is doubled up
@@ -530,9 +521,6 @@ class ReaderPresenter(
                     (hasExtraPage && selectedChapter.pages?.lastIndex?.minus(1) == page.index)
                 )
         ) {
-            if (!isAnyPrevChapterDownloaded) {
-                isAnyPrevChapterDownloaded = selectedChapter.pageLoader is DownloadPageLoader
-            }
             selectedChapter.chapter.read = true
             updateTrackChapterAfterReading(selectedChapter)
             deleteChapterIfNeeded(selectedChapter)
@@ -544,50 +532,38 @@ class ReaderPresenter(
             setReadStartTime()
             loadNewChapter(selectedChapter)
         }
-    }
-
-    private fun downloadChaptersAheadDuringReading() {
-        val currentChapters = viewerChaptersRelay.value
-        if (currentChapters != null) {
-            val isChapterDownloaded = currentChapters.currChapter.pageLoader is DownloadPageLoader
-            // currentChapters.unref()
-            val currentChapter = currentChapters.currChapter
-            val currentChapterPageCount = currentChapter.chapter.last_page_read + currentChapter.chapter.pages_left
-            if ((currentChapter.chapter.last_page_read + 1.0) / currentChapterPageCount > 0.33 || isAnyPrevChapterDownloaded) {
-                downloadNextChapters(isChapterDownloaded)
-            }
-            isAnyPrevChapterDownloaded = false
+        val pages = page.chapter.pages ?: return
+        val inDownloadRange = page.number.toDouble() / pages.size > 0.2
+        if (inDownloadRange) {
+            downloadNextChapters()
         }
     }
 
-    private fun downloadNextChapters(isChapterDownloaded: Boolean) {
+    private fun downloadNextChapters() {
         val manga = manga ?: return
-        val chaptersNumberToDownload = preferences.autoDownloadAfterReading().get()
+        if (getCurrentChapter()?.pageLoader !is DownloadPageLoader) return
+        val nextChapter = viewerChaptersRelay.value?.nextChapter?.chapter ?: return
+        val chaptersNumberToDownload = preferences.autoDownloadWhileReading().get()
         if (chaptersNumberToDownload == 0 || !manga.favorite) return
-        val currentChapter = viewerChapters?.currChapter ?: return
-        if (isChapterDownloaded || isAnyPrevChapterDownloaded) {
-            downloadAutoNextChapters(chaptersNumberToDownload, !isChapterDownloaded && !currentChapter.chapter.read)
+        val isNextChapterDownloaded = downloadManager.isChapterDownloaded(nextChapter, manga)
+        if (isNextChapterDownloaded) {
+            downloadAutoNextChapters(chaptersNumberToDownload, nextChapter.id)
         }
     }
 
-    private fun downloadAutoNextChapters(choice: Int, includeCurrentChapter: Boolean) {
-        val chaptersToDownload = getNextUnreadChaptersSorted(includeCurrentChapter).take(choice)
+    private fun downloadAutoNextChapters(choice: Int, nextChapterId: Long?) {
+        val chaptersToDownload = getNextUnreadChaptersSorted(nextChapterId).take(choice - 1)
         if (chaptersToDownload.isNotEmpty()) {
             downloadChapters(chaptersToDownload)
         }
     }
 
-    private fun getNextUnreadChaptersSorted(includeCurrentChapter: Boolean): List<ChapterItem> {
-        val currentChapterId = getCurrentChapter()?.chapter?.id
+    private fun getNextUnreadChaptersSorted(nextChapterId: Long?): List<ChapterItem> {
         val chapterSort = ChapterSort(manga!!, chapterFilter, preferences)
-
-        val chapters = chapterList.map { ChapterItem(it.chapter, manga!!) }
-            .filter { !it.read || it.id == currentChapterId }
-            .distinctBy { it.name }
+        return chapterList.map { ChapterItem(it.chapter, manga!!) }
+            .filter { !it.read || it.id == nextChapterId }
             .sortedWith(chapterSort.sortComparator(true))
-
-        val currentChapterIndex = chapters.indexOfFirst { it.id == currentChapterId }
-        return chapters.takeLast(chapters.lastIndex - currentChapterIndex + includeCurrentChapter.toInt())
+            .takeLastWhile { it.id != nextChapterId }
     }
 
     /**
@@ -596,6 +572,16 @@ class ReaderPresenter(
      */
     private fun downloadChapters(chapters: List<ChapterItem>) {
         downloadManager.downloadChapters(manga!!, chapters.filter { !it.isDownloaded })
+    }
+
+    /**
+     * Removes [currentChapter] from download queue
+     * if setting is enabled and [currentChapter] is queued for download
+     */
+    private fun deleteChapterFromDownloadQueue(currentChapter: ReaderChapter): Download? {
+        return downloadManager.getChapterDownloadOrNull(currentChapter.chapter)?.apply {
+            downloadManager.deletePendingDownloads(this)
+        }
     }
 
     /**
@@ -608,6 +594,12 @@ class ReaderPresenter(
         val currentChapterPosition = chapterList.indexOf(currentChapter)
         val removeAfterReadSlots = preferences.removeAfterReadSlots()
         val chapterToDelete = chapterList.getOrNull(currentChapterPosition - removeAfterReadSlots)
+
+        if (removeAfterReadSlots != 0 && chapterDownload != null) {
+            downloadManager.addDownloadsToStartOfQueue(listOf(chapterDownload!!))
+        } else {
+            chapterDownload = null
+        }
         // Check if deleting option is enabled and chapter exists
         if (removeAfterReadSlots != -1 && chapterToDelete != null) {
             enqueueDeleteReadChapters(chapterToDelete)
